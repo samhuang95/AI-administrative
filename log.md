@@ -5,6 +5,7 @@
 ---
 
 ## 起點：原始 agent（Google ADK 範例）
+
 - 檔案：`ai-agent/agent.py`
 - 說明：最初的 `agent.py` 包含多個工具函式與 Google ADK（例如 `LlmAgent`、`MCPToolset`）與功能：
   - get_weather(city) 【透過 OpenWeatherMap 或範例回傳】
@@ -16,6 +17,7 @@
 ---
 
 ## 簡化與目標變更（將 agent 簡化為單一 SQLite 查詢功能）
+
 - 動作：將 `ai-agent/agent.py` 的原始內容移除或重寫為精簡模組，移除不必要的函式與第三方依賴，改以本地 SQLite 為示範。
 - 新增行為：在模組匯入時（初期實作）會建立 `data/employee.db`、建立 `employee` table 並在空時加入示範資料。
 - 新檔案（初版）：
@@ -26,13 +28,16 @@
 ---
 
 ## 模組化：把 DB 行為拆成單一責任模組
+
 為了清楚分離責任，程式被拆成多個小模組：
 
 - `ai-agent/create_database.py`
+
   - 函式：`create_database(db_path=None)`
   - 作用：建立 `data/employee.db` 與 `employee` table（不在 import 時執行副作用）。
 
 - `ai-agent/insert_data.py`（後更名/重構為 `insert_employee_data`）
+
   - 函式：`insert_employee_data(db_path=None, data=None)`
   - 作用：若 `employee` table 為空，插入示範員工資料（Alice、Bob、Carol）。
 
@@ -45,9 +50,11 @@
 ---
 
 ## 新增修改（Update）與刪除（Delete）功能
+
 為了實作完整 CRUD，加入修改與刪除功能，並將它們拆成獨立檔案：
 
 - `ai-agent/update_data.py`
+
   - 函式：`update_employee_by_id(emp_id, updates, db_path=None)`
   - 允許更新欄位：`first_name, last_name, email, department, position, salary, hire_date`。
   - 回傳：受影響的列數（int）。
@@ -63,7 +70,9 @@
 ---
 
 ## 套件匯出與測試腳本
+
 - `ai-agent/__init__.py` 被更新以匯出主要函式，方便 `from ai_agent import ...` 的使用：
+
   - create_database, insert_employee_data, query_employees, update_employee_by_id, update_employee_by_email, delete_employee_by_id, delete_employee_by_email
 
 - 測試腳本：
@@ -71,14 +80,16 @@
   - `ai-agent/test_modify.py`（後續）：驗證 update 與 delete 的功能，執行流程：create_database -> insert_employee_data -> query -> update_by_id -> delete_by_id -> query。
 
 我已在你的環境執行過 `test_modify.py`，並驗證：
-  - 建立/找到 DB：`D:\AI-administrative\data\employee.db`
-  - 初始資料（示範）可被查出
-  - 更新（例如 id=1 salary -> 90000）會回傳 updated rows: 1
-  - 刪除（例如 id=3）會回傳 deleted rows: 1（若該 id 尚存在）
+
+- 建立/找到 DB：`D:\AI-administrative\data\employee.db`
+- 初始資料（示範）可被查出
+- 更新（例如 id=1 salary -> 90000）會回傳 updated rows: 1
+- 刪除（例如 id=3）會回傳 deleted rows: 1（若該 id 尚存在）
 
 ---
 
 ## 安全設計與使用說明（重要）
+
 - 為避免匯入模組時發生非預期寫入，目前各功能模組**不會在 import 時自動建立或寫入資料**。若要建立 DB 與插入示範資料，請呼叫：
 
 ```python
@@ -89,6 +100,7 @@ insert_employee_data()
 ```
 
 - 查詢/更新/刪除示例（程式內使用）：
+
 ```python
 from ai_agent.query import query_employees
 from ai_agent.update_data import update_employee_by_id
@@ -108,6 +120,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
 ---
 
 ## 檔案清單（重要檔案與其目的）
+
 - ai-agent/agent.py — 原始 Google ADK 範例（後來被簡化或替換為 SQLite demo）
 - ai-agent/create_database.py — 建立 DB 與 schema
 - ai-agent/insert_data.py — 插入示範員工資料（函式：insert_employee_data）
@@ -121,6 +134,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
 ---
 
 ## 建議的下一步（選項）
+
 1. 若要在專案中保留示範初始化腳本，建議建立一個單獨的 CLI 初始化腳本（例如 `scripts/init_db.py`），避免模組匯入副作用。
 2. 若要更完善的 API，可建立小型 FastAPI 服務以提供 CRUD REST 介面。
 3. 若需自動化測試，建議加入 `tests/` 目錄與 pytest 測試，並在 CI 中執行（需為測試準備臨時資料庫）。
@@ -128,7 +142,9 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
 ---
 
 ## 後續
+
 如果你要我把這個 `log.md` 放到其他路徑或加入更詳細的每次提交紀錄（含每個 apply_patch 的 diff 摘要），我可以再擴充。也可以把測試步驟轉成可執行的 PowerShell 腳本供你一鍵初始化與測試。請告訴我下一步的優先項目。
+
 - [2025-11-16 01:58:25] UPDATE: Simplified ai-agent/agent.py: removed Google ADK content and added SQLite query_employees module.
   - command: `apply_patch: replace agent.py with simplified SQLite-based module`
   - files:
@@ -145,7 +161,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - command: `apply_patch: add query.py with query_employees`
   - files:
     - `ai-agent/query.py`
-- [2025-11-16 01:58:25] UPDATE: Export new functions from package: update __init__.py to include create_database, insert_employee_data, query_employees.
+- [2025-11-16 01:58:25] UPDATE: Export new functions from package: update **init**.py to include create_database, insert_employee_data, query_employees.
   - command: `apply_patch: update __init__.py exports`
   - files:
     - `ai-agent/__init__.py`
@@ -169,7 +185,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - command: `apply_patch: update modify_data.py to use new id-based modules`
   - files:
     - `ai-agent/modify_data.py`
-- [2025-11-16 01:58:25] UPDATE: Update __init__.py to re-export id-based functions from update_data and delete_data.
+- [2025-11-16 01:58:25] UPDATE: Update **init**.py to re-export id-based functions from update_data and delete_data.
   - command: `apply_patch: update __init__ imports and exports`
   - files:
     - `ai-agent/__init__.py`
@@ -194,7 +210,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - command: `apply_patch: add install_git_hook.ps1`
   - files:
     - `scripts/install_git_hook.ps1`
-- [2025-11-16 02:14:22] COMMIT: Create DB controllers and log record hook feature.  
+- [2025-11-16 02:14:22] COMMIT: Create DB controllers and log record hook feature.
   - command: `git commit -m "Create DB controllers and log record hook feature.  "`
   - files:
     - `.gitignore`
@@ -311,3 +327,40 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - files:
     - `README.md`
     - `log.md`
+- [2025-11-16 05:04:58] COMMIT: deleted the test programs
+  - command: `git commit -m "deleted the test programs"`
+  - files:
+    - `ai-agent/test_import.py`
+
+---
+
+- [2025-11-16 04:53:30] UPDATE: Fix post-commit hook path so it invokes the repository-level `log_writer.py`.
+
+  - command: `apply_patch: update .git/hooks/post-commit LOG_WRITER path`
+  - files:
+    - `.git/hooks/post-commit`
+
+- [2025-11-16 04:54:10] UPDATE: Fix `log_writer.py` repo-root calculation so `log.md` is written to repository root.
+
+  - command: `apply_patch: change ROOT = Path(__file__).resolve().parent`
+  - files:
+    - `log_writer.py`
+
+- [2025-11-16 04:55:05] UPDATE: Make ADK agent name a valid identifier to satisfy LlmAgent validation.
+
+  - command: `apply_patch: change agent name to ai_administrative`
+  - files:
+    - `ai-agent/agent.py`
+
+- [2025-11-16 04:56:20] CREATE: Add assistant helper to append assistant-originated log entries.
+  - command: `create_file: scripts/assistant_append_log.py`
+  - files:
+    - `scripts/assistant_append_log.py`
+
+Note: I will continue to append assistant-originated entries when I make edits during this session. For repository commits, the post-commit hook now runs `log_writer.py --from-hook` and will append COMMIT entries automatically.
+
+- [2025-11-16 05:07:58] UPDATE: Assistant: append recent fixes
+  - files:
+    - `.git/hooks/post-commit`
+    - `log_writer.py`
+    - `ai-agent/agent.py`

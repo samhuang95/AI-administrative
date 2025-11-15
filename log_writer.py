@@ -14,7 +14,9 @@ import argparse
 import subprocess
 
 
-ROOT = Path(__file__).resolve().parent.parent
+# The log writer lives at the repository root. Use the file's parent as
+# the repo root (not parent.parent, which points above the repo).
+ROOT = Path(__file__).resolve().parent
 LOG_PATH = ROOT / "log.md"
 
 

@@ -1,7 +1,7 @@
 param()
 
 # Install post-commit git hook (PowerShell)
-# Writes a LF-only, UTF-8 (no BOM) hook that invokes ai-agent/log_writer.py --from-hook
+# Writes a LF-only, UTF-8 (no BOM) hook that invokes log_writer.py --from-hook
 
 function Get-RepoRoot {
     $out = git rev-parse --show-toplevel 2>$null
@@ -37,7 +37,7 @@ else
     exit 0
 fi
 
-LOG_WRITER="$REPO_ROOT/ai-agent/log_writer.py"
+LOG_WRITER="$REPO_ROOT/log_writer.py"
 if [ -f "$LOG_WRITER" ]; then
     exec $PYCMD "$LOG_WRITER" --from-hook
 else
@@ -58,7 +58,7 @@ if (Get-Command bash -ErrorAction SilentlyContinue) {
 Write-Host "Installed post-commit hook at $hookPath"
 <#
 PowerShell helper to install a git post-commit hook that appends commit info
-to `log.md` by calling the Python module `ai_agent.log_writer`.
+to `log.md` by calling the Python module `log_writer`.
 
 Run from repository root with PowerShell (recommended):
   .\scripts\install_git_hook.ps1
@@ -83,7 +83,7 @@ $hookContent = @'
 # post-commit hook: append commit info to log.md via Python
 COMMIT_MSG=$(git log -1 --pretty=%B | tr '\n' ' ')
 FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | tr '\n' ',' | sed 's/,$//')
-py -3 -m ai_agent.log_writer "$COMMIT_MSG" --action COMMIT --files "$FILES" --command "git commit -m \"$COMMIT_MSG\""
+py -3 -m log_writer "$COMMIT_MSG" --action COMMIT --files "$FILES" --command "git commit -m \"$COMMIT_MSG\""
 '@
 
 Set-Content -Path $hookPath -Value $hookContent -Encoding UTF8

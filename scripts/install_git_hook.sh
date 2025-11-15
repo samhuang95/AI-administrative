@@ -33,7 +33,7 @@ else
     exit 0
 fi
 
-LOG_WRITER="$REPO_ROOT/ai-agent/log_writer.py"
+LOG_WRITER="$REPO_ROOT/log_writer.py"
 if [ -f "$LOG_WRITER" ]; then
     exec $PYCMD "$LOG_WRITER" --from-hook
 else

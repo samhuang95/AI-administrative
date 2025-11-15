@@ -11,7 +11,7 @@ from typing import List, Dict, Optional
 DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "employee.db"
 
 
-def query_employee_list(db_path: Optional[Path | str] = None, limit: int = 100) -> List[Dict]:
+def query_employees(db_path: Optional[Path | str] = None, limit: int = 100) -> List[Dict]:
     """Return up to `limit` employee rows as a list of dicts.
 
     Args:
@@ -36,5 +36,5 @@ def query_employee_list(db_path: Optional[Path | str] = None, limit: int = 100) 
 
 if __name__ == "__main__":
     import json
-    rows = query_employee_list()
+    rows = query_employees()
     print(json.dumps(rows, ensure_ascii=False, indent=2))

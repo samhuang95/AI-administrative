@@ -8,23 +8,23 @@
 
 - Windows / PowerShell（建議 Windows 使用者）
 
-	在專案根目錄執行：
+  在專案根目錄執行：
 
-	```powershell
-	powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install_git_hook.ps1
-	```
+  ```powershell
+  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install_git_hook.ps1
+  ```
 
-	此腳本會在 `.git/hooks/post-commit` 寫入一個 LF（Unix）格式、UTF-8 無 BOM 的 hook，並嘗試在系統上設定為可執行。
+  此腳本會在 `.git/hooks/post-commit` 寫入一個 LF（Unix）格式、UTF-8 無 BOM 的 hook，並嘗試在系統上設定為可執行。
 
 - Git Bash / WSL / Linux（bash 環境）
 
-	在專案根目錄執行：
+  在專案根目錄執行：
 
-	```bash
-	bash scripts/install_git_hook.sh
-	```
+  ```bash
+  bash scripts/install_git_hook.sh
+  ```
 
-	此腳本同樣會寫入 `.git/hooks/post-commit` 並設定可執行權限。
+  此腳本同樣會寫入 `.git/hooks/post-commit` 並設定可執行權限。
 
 安裝後，建議測試一次 commit：
 

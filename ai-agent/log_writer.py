@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Iterable, Optional
 import argparse
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,11 +53,30 @@ def append_log(action: str, description: str, command: Optional[str] = None, fil
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Append a simple entry to repo log.md")
-    parser.add_argument("description", help="Short description of the action")
+    parser.add_argument("description", nargs='?', default='(no description)', help="Short description of the action")
     parser.add_argument("--action", default="UPDATE", help="Action type (CREATE/UPDATE/DELETE/TEST)")
     parser.add_argument("--command", help="Command that was run")
     parser.add_argument("--files", help="Comma-separated list of files changed/created")
+    parser.add_argument("--from-hook", action="store_true", help="Run as a git hook: auto-detect commit message and files")
     args = parser.parse_args()
+
+    if getattr(args, "from_hook", False):
+        # When invoked from a git hook, let Python call git to get the
+        # last commit message and changed files (avoids shell-tool
+        # portability issues on Windows).
+        try:
+            commit_msg = subprocess.check_output(["git", "log", "-1", "--pretty=%B"], text=True).strip()
+        except Exception:
+            commit_msg = "(unable to read commit message)"
+
+        try:
+            files_out = subprocess.check_output(["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"], text=True)
+            files = [s for s in (files_out or "").splitlines() if s]
+        except Exception:
+            files = None
+
+        append_log("COMMIT", commit_msg.replace("\n", " "), command=f"git commit -m \"{commit_msg}\"", files=files)
+        return
 
     files = [s.strip() for s in args.files.split(",")] if args.files else None
     append_log(args.action, args.description, command=args.command, files=files)

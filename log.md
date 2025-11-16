@@ -390,3 +390,9 @@ Note: I will continue to append assistant-originated entries when I make edits d
   - command: `python scripts/assistant_append_log.py "Assistant: log performance table addition" --action UPDATE --files data/create_database.py`
   - files:
     - `log.md`
+- [2025-11-16 16:42:39] COMMIT: test: install hooks
+  - command: `git commit -m "test: install hooks"`
+- [2025-11-16 16:48:13] COMMIT: docs: add hook installation instructions to README
+  - command: `git commit -m "docs: add hook installation instructions to README"`
+  - files:
+    - `README.md`

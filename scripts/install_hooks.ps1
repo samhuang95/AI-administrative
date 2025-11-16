@@ -12,8 +12,11 @@ param(
     [switch]$Global
 )
 
-Push-Location -LiteralPath (Split-Path -Path $MyInvocation.MyCommand.Path -Parent)\..\ | Out-Null
-$repoRoot = Get-Location
+# Change working directory to the repository root (script folder's parent)
+$scriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
+$repoRoot = Join-Path -Path $scriptDir -ChildPath ".."
+Push-Location -LiteralPath $repoRoot | Out-Null
+Set-Location -LiteralPath (Resolve-Path -LiteralPath $repoRoot) | Out-Null
 
 if (-not (Test-Path -LiteralPath ".githooks")) {
     New-Item -ItemType Directory -Path .githooks | Out-Null

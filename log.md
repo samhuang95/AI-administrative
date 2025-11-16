@@ -376,3 +376,17 @@ Note: I will continue to append assistant-originated entries when I make edits d
   - files:
     - `README.md`
     - `log.md`
+
+---
+
+- [2025-11-16 11:45:00] UPDATE: Add `create_performance_table` to `data/create_database.py` to support employee performance reviews.
+
+  - command: `apply_patch: add create_performance_table function to data/create_database.py`
+  - notes: Uses `reviewer_employee_id` FK (references `employee.id`), removes `review_date` and `period`, keeps `created_at` timestamp and indexes for efficient lookup.
+  - files:
+    - `data/create_database.py`
+
+- [2025-11-16 11:45:15] UPDATE: Assistant appended this changelog entry.
+  - command: `python scripts/assistant_append_log.py "Assistant: log performance table addition" --action UPDATE --files data/create_database.py`
+  - files:
+    - `log.md`

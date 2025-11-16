@@ -2,7 +2,13 @@
 
 ### 1. 環境啟動
 
-在 `ai-agent` 資料中，建立 `.env` 檔（視需要）。
+在 `ai-agent` 資料中，建立 `.env` 檔，格式如下
+```powershell
+GOOGLE_GENAI_USE_VERTEXAI=FALSE
+MODEL_USE=gemini-2.5-flash
+GOOGLE_API_KEY={輸入自己的 Google API key}
+```
+
 
 建立虛擬環境（請使用 Python 3.13 或以上）：
 

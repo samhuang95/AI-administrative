@@ -33,8 +33,3 @@ def query_employees(db_path: Optional[Path | str] = None, limit: int = 100) -> L
 
 
 
-
-if __name__ == "__main__":
-    import json
-    rows = query_employees()
-    print(json.dumps(rows, ensure_ascii=False, indent=2))

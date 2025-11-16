@@ -52,243 +52,251 @@ def insert_employee_data(db_path: Optional[Path | str] = None, data: Optional[Se
     finally:
         conn.close()
 
+def insert_performance_review_data(db_path: Optional[Path | str] = None, data: Optional[Sequence[Tuple]] = None, force: bool = False) -> int:
+    """Insert sample rows into the `employee` table if it's empty.
 
-if __name__ == "__main__":
-    inserted = insert_employee_data()
-    print(f"Inserted {inserted} rows (0 means table already had rows).")
+    Args:
+        db_path: Optional database path. Uses default if omitted.
+        data: Optional sequence of rows to insert. If omitted, uses performance_review_data.
+
+    Returns:
+        Number of rows inserted.
+    """
+    # If data is None there's nothing to insert
+    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    print("data::::",data)
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(1) FROM performance_review")
+        row = cur.fetchone()
+        count = int(row[0]) if row is not None else 0
+        # By default this helper will only insert when the table is empty to avoid accidental duplicates.
+        # Pass `force=True` to append regardless of existing rows.
+        if count == 0 or force:
+            cur.executemany(
+                "INSERT INTO performance_review (employee_id, reviewer_employee_id, score, comments, created_at) VALUES (?,?,?,?,?)",
+                data,
+            )
+            conn.commit()
+            return len(data)
+        return 0
+    finally:
+        conn.close()
 
 
-def insert_many_employees(db_path: Optional[Path | str] = None, n: int = 20) -> int:
-    """Insert `n` synthetic employees into the employee table.
+def find_employees(query: str, db_path: Optional[Path | str] = None, limit: int = 10):
+    """Search employees by name / position / department using LIKE (case-insensitive).
 
-    Returns number of rows inserted.
+    Returns list of dict rows.
     """
     db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
-    # Ensure DB and table exist
+    q = f"%{query.strip()}%"
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     try:
-        from data.create_database import create_database_employee
-    except Exception:
-        # running as script: ensure repo root is on sys.path
-        repo_root = Path(__file__).resolve().parent.parent
-        if str(repo_root) not in sys.path:
-            sys.path.insert(0, str(repo_root))
-        from data.create_database import create_database_employee
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT * FROM employee
+            WHERE (first_name || ' ' || last_name) LIKE ?
+               OR first_name LIKE ?
+               OR last_name LIKE ?
+               OR position LIKE ?
+               OR department LIKE ?
+            ORDER BY id
+            LIMIT ?
+            """,
+            (q, q, q, q, q, limit),
+        )
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
 
-    create_database_employee(db_path)
 
-    # sample pools
-    first_names = ["Alex","Bryan","Cindy","Diana","Ethan","Fiona","George","Hannah","Ivan","Julia","Kevin","Lily","Marcus","Nina","Oliver","Penny","Quinn","Rita","Samuel","Tina"]
-    last_names = ["Lee","Wong","Huang","Chen","Lin","Wu","Chang","Kao","Tsai","Cheng"]
-    departments = {
-        "Engineering": ["Junior Engineer","Engineer","Senior Engineer","Tech Lead"],
-        "Sales": ["Sales Rep","Senior Sales","Sales Manager"],
-        "HR": ["HR Specialist","HR Manager"],
-        "Finance": ["Accountant","Senior Accountant","Finance Manager"],
-        "Support": ["Support Agent","Support Lead"]
+def resolve_employee_identifier(identifier, db_path: Optional[Path | str] = None):
+    """Resolve an identifier (id, email, or fuzzy name/role) to matching employee rows.
+
+    Returns a list (may be empty or contain multiple candidates).
+    """
+    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        cur = conn.cursor()
+        # numeric id
+        if isinstance(identifier, int) or (isinstance(identifier, str) and str(identifier).isdigit()):
+            eid = int(identifier)
+            cur.execute("SELECT * FROM employee WHERE id = ?", (eid,))
+            row = cur.fetchone()
+            return [dict(row)] if row else []
+        # email
+        if isinstance(identifier, str) and "@" in identifier:
+            cur.execute("SELECT * FROM employee WHERE email = ?", (identifier.strip(),))
+            row = cur.fetchone()
+            return [dict(row)] if row else []
+        # fallback fuzzy search
+        return find_employees(str(identifier), db_path=db_path, limit=20)
+    finally:
+        conn.close()
+
+
+def is_manager_of(reviewer_id: int, target_id: int, db_path: Optional[Path | str] = None) -> bool:
+    """Return True if reviewer_id is an ancestor (manager) of target_id via supervisor_id chain."""
+    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        current = int(target_id)
+        while True:
+            cur.execute("SELECT supervisor_id FROM employee WHERE id = ?", (current,))
+            row = cur.fetchone()
+            if not row:
+                return False
+            supervisor_id = row[0]
+            if supervisor_id is None:
+                return False
+            if int(supervisor_id) == int(reviewer_id):
+                return True
+            current = int(supervisor_id)
+    finally:
+        conn.close()
+
+
+def insert_performance_review(
+    employee_id: int,
+    reviewer_employee_id: int,
+    score: int,
+    comments: str,
+    db_path: Optional[Path | str] = None,
+    created_at: Optional[str] = None,
+) -> int:
+    """Insert a single performance review and return the new review id."""
+    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    created_at = created_at or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO performance_review (employee_id, reviewer_employee_id, score, comments, created_at) VALUES (?,?,?,?,?)",
+            (int(employee_id), int(reviewer_employee_id), int(score), str(comments), created_at),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def prepare_and_insert_review(
+    reviewer_identifier=None,
+    target_identifier=None,
+    score: Optional[int] = None,
+    comments: Optional[str] = None,
+    db_path: Optional[Path | str] = None,
+    acting_reviewer_id: Optional[int] = None,
+):
+    """High-level helper for LLM-driven review insertion.
+
+    Returns dict with status:
+      - need_disambiguation: contains candidate lists
+      - need_input: lists missing fields
+      - forbidden: reviewer not manager of target
+      - inserted: insertion successful with id and summary
+    """
+    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+
+    # If reviewer_identifier wasn't provided, but acting_reviewer_id is available (caller identity), use it.
+    if reviewer_identifier is None and acting_reviewer_id is not None:
+        reviewer_matches = resolve_employee_identifier(int(acting_reviewer_id), db_path=db_path)
+    else:
+        reviewer_matches = resolve_employee_identifier(reviewer_identifier, db_path=db_path)
+
+    target_matches = resolve_employee_identifier(target_identifier, db_path=db_path)
+
+    if not reviewer_matches:
+        return {"status": "error", "message": f"No reviewer found for '{reviewer_identifier or acting_reviewer_id}'"}
+    if not target_matches:
+        return {"status": "error", "message": f"No target employee found for '{target_identifier}'"}
+
+    if len(reviewer_matches) > 1 or len(target_matches) > 1:
+        return {"status": "need_disambiguation", "reviewer_candidates": reviewer_matches, "target_candidates": target_matches}
+
+    reviewer = reviewer_matches[0]
+    target = target_matches[0]
+
+    # If acting_reviewer_id provided, ensure it matches the resolved reviewer (caller cannot act as another id)
+    if acting_reviewer_id is not None and int(reviewer.get("id")) != int(acting_reviewer_id):
+        return {
+            "status": "forbidden",
+            "message": "您提供的主管員工編號與您目前身份不符，無法代為建立考核。請確認您自己的員工編號或登入正確的帳號。",
+            "resolved_reviewer": reviewer,
+            "acting_reviewer_id": acting_reviewer_id,
+        }
+
+    # Check manager relationship
+    if not is_manager_of(int(reviewer["id"]), int(target["id"]), db_path=db_path):
+        return {
+            "status": "forbidden",
+            "message": "Reviewer is not a manager/ancestor of the target employee. Only managers can review their subordinates.",
+            "reviewer": reviewer,
+            "target": target,
+        }
+
+    # Validate score: must be integer 0-100
+    missing = []
+    if score is None:
+        missing.append("score")
+    else:
+        # allow numeric strings
+        try:
+            score_int = int(float(score))
+        except Exception:
+            return {"status": "invalid_score", "message": "分數需為 0-100 的整數。"}
+        if score_int < 0 or score_int > 100:
+            return {"status": "invalid_score", "message": "分數需在 0 到 100 的範圍內。"}
+        score = score_int
+
+    if comments is None or str(comments).strip() == "":
+        missing.append("comments")
+
+    if missing:
+        return {"status": "need_input", "missing": missing, "reviewer": reviewer, "target": target}
+
+    # Attempt insert and catch DB errors to return a helpful message
+    try:
+        review_id = insert_performance_review(
+            employee_id=int(target["id"]),
+            reviewer_employee_id=int(reviewer["id"]),
+            score=int(score),
+            comments=str(comments),
+            db_path=db_path,
+        )
+    except sqlite3.IntegrityError as e:
+        return {"status": "error", "message": "資料不完整或違反資料庫限制，無法新增考核。", "detail": str(e)}
+    except sqlite3.DatabaseError as e:
+        return {"status": "error", "message": "資料庫錯誤，請稍後再試。", "detail": str(e)}
+    except Exception as e:
+        return {"status": "error", "message": "新增考核時發生未知錯誤。", "detail": str(e)}
+
+    return {
+        "status": "inserted",
+        "id": review_id,
+        "review": {
+            "employee_id": target["id"],
+            "employee_name": f"{target.get('first_name','')} {target.get('last_name','')}".strip(),
+            "reviewer_id": reviewer["id"],
+            "reviewer_name": f"{reviewer.get('first_name','')} {reviewer.get('last_name','')}".strip(),
+            "score": score,
+            "comments": comments,
+        },
     }
 
-    # create deterministic list of employees across departments
-    employees = []
-    email_domain = "example.com"
-    idx = 0
-    dept_list = list(departments.keys())
-    while len(employees) < n:
-        fn = first_names[idx % len(first_names)]
-        ln = last_names[idx % len(last_names)]
-        dept = dept_list[len(employees) % len(dept_list)]
-        # choose position distribution skewed by index
-        pos_list = departments[dept]
-        pos = pos_list[min(len(pos_list)-1, (len(employees)//len(dept_list)) % len(pos_list))]
-        email = f"{fn.lower()}.{ln.lower()}{idx}@{email_domain}"
-        salary = float(50000 + (idx % 10) * 5000)
-        hire_date = datetime(2020, 1, 1) + idx * timedelta(days=30)
-        hire_date_str = hire_date.strftime("%Y-%m-%d")
-        employees.append((fn, ln, email, dept, pos, salary, hire_date_str))
-        idx += 1
-
-    # insert into DB
-    return insert_employee_data(db_path=db_path, data=employees)
-
-
-def create_performance_reviews_by_managers(db_path: Optional[Path | str] = None) -> int:
-    """Create performance reviews where each employee (except top-level) is reviewed by a manager.
-
-    Returns number of reviews inserted.
-    """
-    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
-    # ensure performance table exists
-    try:
-        from data.create_database import create_performance_table
-    except Exception:
-        repo_root = Path(__file__).resolve().parent.parent
-        if str(repo_root) not in sys.path:
-            sys.path.insert(0, str(repo_root))
-        from data.create_database import create_performance_table
-
-    create_performance_table(db_path)
-
-    conn = sqlite3.connect(db_path)
-    try:
-        cur = conn.cursor()
-        # load employees
-        cur.execute("SELECT id, department, position FROM employee ORDER BY id")
-        rows = cur.fetchall()
-        if not rows:
-            return 0
-
-        # simple mapping of seniority: pick reviewer as first employee in same department with lower id but different position
-        reviews = []
-        for emp in rows:
-            emp_id, dept, pos = emp
-            # find possible reviewers: someone with same dept and id < emp_id
-            cur.execute("SELECT id FROM employee WHERE department = ? AND id < ? ORDER BY id DESC LIMIT 1", (dept, emp_id))
-            r = cur.fetchone()
-            if r:
-                reviewer_id = r[0]
-            else:
-                # fallback: pick any other employee with id != emp_id
-                cur.execute("SELECT id FROM employee WHERE id != ? LIMIT 1", (emp_id,))
-                rf = cur.fetchone()
-                reviewer_id = rf[0] if rf else None
-
-            if reviewer_id is None:
-                continue
-
-            score = round(3.0 + random.random() * 2.0, 1)
-            comments = "Auto-generated review"
-            created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            reviews.append((emp_id, reviewer_id, score, comments, created_at))
-
-        cur.executemany(
-            "INSERT INTO performance_review (employee_id, reviewer_employee_id, score, comments, created_at) VALUES (?,?,?,?,?)",
-            reviews,
-        )
-        conn.commit()
-        return len(reviews)
-    finally:
-        conn.close()
-
-
-def query_employees_and_reviews(db_path: Optional[Path | str] = None):
-    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
-    conn = sqlite3.connect(db_path)
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT id, first_name, last_name, department, position, email FROM employee ORDER BY id")
-        emps = cur.fetchall()
-        cur.execute("SELECT pr.id, pr.employee_id, pr.reviewer_employee_id, pr.score, pr.comments, pr.created_at FROM performance_review pr ORDER BY pr.id")
-        revs = cur.fetchall()
-        return emps, revs
-    finally:
-        conn.close()
-
-
-def create_n_performance_reviews(db_path: Optional[Path | str] = None, n: int = 100) -> int:
-    """Create `n` performance reviews across employees.
-
-    Rules:
-    - For each review pick a target employee at random.
-    - Choose a reviewer prefering same-department senior employees; if none, pick any other employee.
-    - Allow the same reviewer to review the same subordinate multiple times.
-
-    Returns number of reviews inserted.
-    """
-    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
-    # ensure performance table exists
-    try:
-        from data.create_database import create_performance_table
-    except Exception:
-        repo_root = Path(__file__).resolve().parent.parent
-        if str(repo_root) not in sys.path:
-            sys.path.insert(0, str(repo_root))
-        from data.create_database import create_performance_table
-
-    create_performance_table(db_path)
-
-    conn = sqlite3.connect(db_path)
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT id, department, position FROM employee ORDER BY id")
-        rows = cur.fetchall()
-        if not rows:
-            return 0
-
-        # Build potential reviewer lists per employee
-        emp_list = [dict(id=r[0], department=r[1], position=r[2]) for r in rows]
-        id_to_index = {e['id']: i for i, e in enumerate(emp_list)}
-
-        # Precompute seniority candidates per department (prefer managers/leads/senior)
-        dept_candidates = {}
-        for e in emp_list:
-            dept = e['department']
-            dept_candidates.setdefault(dept, []).append(e)
-
-        reviews = []
-        for _ in range(n):
-            target = random.choice(emp_list)
-            candidates = []
-            # Prefer same-department candidates with 'Manager','Lead','Senior' or lower id
-            for c in dept_candidates.get(target['department'], []):
-                if c['id'] != target['id'] and (
-                    any(k in (c['position'] or '').lower() for k in ['manager', 'lead', 'senior'])
-                    or c['id'] < target['id']
-                ):
-                    candidates.append(c)
-
-            if not candidates:
-                # fallback: any other employee
-                candidates = [c for c in emp_list if c['id'] != target['id']]
-
-            if not candidates:
-                continue
-
-            reviewer = random.choice(candidates)
-            score = round(2.5 + random.random() * 2.5, 1)  # range ~2.5-5.0
-            comments = random.choice([
-                'Meets expectations',
-                'Exceeds expectations',
-                'Needs improvement',
-                'Outstanding contribution',
-                'Solid performance'
-            ])
-            # random recent timestamp within last 365 days
-            from datetime import timedelta
-            days_back = random.randint(0, 365)
-            created_at = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d %H:%M:%S")
-            reviews.append((target['id'], reviewer['id'], score, comments, created_at))
-
-        cur.executemany(
-            "INSERT INTO performance_review (employee_id, reviewer_employee_id, score, comments, created_at) VALUES (?,?,?,?,?)",
-            reviews,
-        )
-        conn.commit()
-        return len(reviews)
-    finally:
-        conn.close()
-
 
 if __name__ == "__main__":
-    # If executed directly, perform full seed: ensure DB, insert many employees, create reviews, and print summary
-    print("Initializing DB and seeding employees + performance reviews...")
-    # ensure base DB
-    try:
-        from data.create_database import create_database_employee, create_performance_table
-    except Exception:
-        repo_root = Path(__file__).resolve().parent.parent
-        if str(repo_root) not in sys.path:
-            sys.path.insert(0, str(repo_root))
-        from data.create_database import create_database_employee, create_performance_table
+    print("This module provides helpers for seeding and LLM-driven review insertion.")
 
-    db = create_database_employee()
-    create_performance_table(db)
-    inserted = insert_many_employees(db, n=20)
-    print(f"Inserted {inserted} employees")
-    rev_count = create_performance_reviews_by_managers(db)
-    print(f"Inserted {rev_count} performance reviews")
-    emps, revs = query_employees_and_reviews(db)
-    print("\nEmployees:")
-    for e in emps:
-        print(e)
-    print("\nReviews:")
-    for r in revs:
-        print(r)
+
+
+
+
+

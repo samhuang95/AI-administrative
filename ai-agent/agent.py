@@ -5,6 +5,7 @@ import datetime
 
 # Import database query helper
 from data.query_data import query_employees
+from data.insert_data import insert_performance_review_data, insert_performance_review
 
 import os
 from dotenv import load_dotenv, dotenv_values
@@ -73,11 +74,36 @@ def find_employees_by_role(query: str) -> Dict:
     return {"status": "success", "text": "\n".join(lines), "employees": matches}
 
 
+def add_performance_review(employee_id: int, reviewer_employee_id: int, score: float, comments: str) -> Dict:
+    """Tool: Add a performance review for an employee.
+
+    Args:
+        employee_id: ID of the employee being reviewed.
+        reviewer_employee_id: ID of the employee who is the reviewer.
+        score: Performance score (e.g., 0 to 100).
+        comments: Review comments.
+    """
+    # Validate and coerce score to integer 0-100
+    try:
+        score_int = int(float(score))
+    except Exception:
+        return {"status": "error", "text": "分數格式錯誤，請提供 0 到 100 的整數。"}
+    if score_int < 0 or score_int > 100:
+        return {"status": "error", "text": "分數需在 0 到 100 的範圍內。"}
+
+    # Insert single review using insert_performance_review (works regardless of table non-empty)
+    try:
+        rid = insert_performance_review(employee_id=employee_id, reviewer_employee_id=reviewer_employee_id, score=score_int, comments=comments)
+        return {"status": "success", "text": f"Performance review added successfully (id={rid})."}
+    except Exception as e:
+        return {"status": "error", "text": "Failed to add performance review.", "detail": str(e)}
+
+
 # Register tools with LlmAgent if available
 root_agent = LlmAgent(
 name="ai_administrative",
 model=os.getenv("MODEL_USE"),
 description=("Agent to help with administrative tasks such as managing employee data"),
 instruction=("You are an AI administrative assistant. Use the provided tools to answer user queries about employees."),
-tools=[list_all_employees, find_employees_by_role],
+tools=[list_all_employees, find_employees_by_role, add_performance_review],
 )

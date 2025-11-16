@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Repository-tracked post-commit hook (POSIX shell)
+# Calls the repository-level log_writer.py with --from-hook
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+if command -v py >/dev/null 2>&1; then
+  py -3 "$REPO_ROOT/log_writer.py" --from-hook
+elif command -v python3 >/dev/null 2>&1; then
+  python3 "$REPO_ROOT/log_writer.py" --from-hook
+elif command -v python >/dev/null 2>&1; then
+  python "$REPO_ROOT/log_writer.py" --from-hook
+else
+  # Try executing directly; ignore errors to avoid blocking commits
+  "$REPO_ROOT/log_writer.py" --from-hook || true
+fi

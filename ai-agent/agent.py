@@ -4,8 +4,8 @@ from typing import List, Dict, Optional
 import datetime
 
 # Import database query helper
-from data.query_data import query_employees
-from data.insert_data import insert_performance_review_data, insert_performance_review
+from data.query_data import query_employees, query_performance_reviews
+from data.insert_data import insert_performance_review_data, insert_performance_review, resolve_employee_identifier
 
 import os
 from dotenv import load_dotenv, dotenv_values
@@ -14,7 +14,6 @@ load_dotenv()
 
 def _format_employee_row(row: Dict) -> str:
     """Return a compact single-line representation for one employee row."""
-    print("row::::",row)
     name = f"{row.get('first_name','')} {row.get('last_name','')}".strip()
     pos = row.get('position') or ''
     dept = row.get('department') or ''
@@ -28,7 +27,6 @@ def list_all_employees() -> Dict:
     Returns a dict so the ADK tool runner can serialize the result. The
     'text' key contains a human-readable string for direct display in chat.
     """
-    print("list_all_employees::::")
     rows = query_employees()
     if not rows:
         return {"status": "success", "text": "沒有找到任何員工資料。"}
@@ -99,11 +97,45 @@ def add_performance_review(employee_id: int, reviewer_employee_id: int, score: f
         return {"status": "error", "text": "Failed to add performance review.", "detail": str(e)}
 
 
+def get_employee_performance_reviews(employee_name: str) -> Dict:
+    """Tool: Get performance reviews for a specific employee by name or ID.
+
+    Args:
+        employee_name: The name or ID of the employee to query.
+    """
+    candidates = resolve_employee_identifier(employee_name)
+
+    if not candidates:
+        return {"status": "error", "text": f"找不到名為 '{employee_name}' 的員工。"}
+
+    if len(candidates) > 1:
+        lines = [f"找到多位符合 '{employee_name}' 的員工，請提供更精確的名稱或 ID："]
+        for c in candidates:
+            lines.append(_format_employee_row(c))
+        return {"status": "ambiguous", "text": "\n".join(lines), "candidates": candidates}
+
+    target = candidates[0]
+    reviews = query_performance_reviews(target['id'])
+
+    if not reviews:
+        return {"status": "success", "text": f"{target['first_name']} {target['last_name']} 目前沒有任何考核紀錄。"}
+
+    lines = [f"{target['first_name']} {target['last_name']} 的考核紀錄："]
+    for r in reviews:
+        lines.append(f"- 日期: {r['created_at']}")
+        lines.append(f"  評分: {r['score']}")
+        lines.append(f"  評語: {r['comments']}")
+        lines.append(f"  評核主管: {r['reviewer_name']}")
+        lines.append("")
+
+    return {"status": "success", "text": "\n".join(lines), "reviews": reviews}
+
+
 # Register tools with LlmAgent if available
 root_agent = LlmAgent(
 name="ai_administrative",
 model=os.getenv("MODEL_USE"),
 description=("Agent to help with administrative tasks such as managing employee data"),
 instruction=("You are an AI administrative assistant. Use the provided tools to answer user queries about employees."),
-tools=[list_all_employees, find_employees_by_role, add_performance_review],
+tools=[list_all_employees, find_employees_by_role, add_performance_review, get_employee_performance_reviews],
 )

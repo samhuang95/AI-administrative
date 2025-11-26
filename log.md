@@ -396,3 +396,8 @@ Note: I will continue to append assistant-originated entries when I make edits d
   - command: `git commit -m "docs: add hook installation instructions to README"`
   - files:
     - `README.md`
+- [2025-11-26 18:39:57] COMMIT: Update the hook programs.
+  - command: `git commit -m "Update the hook programs."`
+  - files:
+    - `log.md`
+    - `scripts/install_hooks.ps1`

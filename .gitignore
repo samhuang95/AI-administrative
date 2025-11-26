@@ -1,1 +1,3 @@
 /ai-agent/.env
+__pycache__
+/ai-agent/__pycache__

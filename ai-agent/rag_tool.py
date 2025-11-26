@@ -61,15 +61,9 @@ def _index_documents():
 
     # Simple check: if collection is empty, index everything.
     # In a real app, we'd check file hashes or modification times.
-    if collection.count() > 0:
-        # For this demo, we'll just return.
-        # To force re-index, user can delete the chroma_db folder.
-        # Or we can implement a smarter sync.
-        # Let's do a simple "delete all and re-index" for now to ensure freshness
-        # since the user said they want to "freely add/change".
-        # BUT deleting every time is slow.
-        # Let's just check if the count matches roughly or just re-add (upsert).
-        pass
+    # For now, we always scan files and upsert to ensure new files are added.
+    # if collection.count() > 0:
+    #    pass
 
     # Re-reading files
     docs = []

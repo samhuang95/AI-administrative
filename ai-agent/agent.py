@@ -2,12 +2,20 @@ from google.adk.agents import LlmAgent
 
 from typing import List, Dict, Optional
 import datetime
+import sys
+import os
+
+# Add current directory to sys.path to ensure local modules like rag_tool can be imported
+# This is necessary because the folder name 'ai-agent' contains a hyphen and cannot be imported as a package
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
 
 # Import database query helper
 from data.query_data import query_employees, query_performance_reviews
 from data.insert_data import insert_performance_review_data, insert_performance_review, resolve_employee_identifier
+from rag_tool import search_company_policies
 
-import os
 from dotenv import load_dotenv, dotenv_values
 # Load environment variables from .env file
 load_dotenv()
@@ -137,5 +145,5 @@ name="ai_administrative",
 model=os.getenv("MODEL_USE"),
 description=("Agent to help with administrative tasks such as managing employee data"),
 instruction=("You are an AI administrative assistant. Use the provided tools to answer user queries about employees."),
-tools=[list_all_employees, find_employees_by_role, add_performance_review, get_employee_performance_reviews],
+tools=[list_all_employees, find_employees_by_role, add_performance_review, get_employee_performance_reviews, search_company_policies],
 )

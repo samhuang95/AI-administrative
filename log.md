@@ -401,3 +401,42 @@ Note: I will continue to append assistant-originated entries when I make edits d
   - files:
     - `log.md`
     - `scripts/install_hooks.ps1`
+- [2025-11-26 19:39:09] COMMIT: Feat - Query the employee performance review function.
+  - command: `git commit -m "Feat - Query the employee performance review function."`
+  - files:
+    - `ai-agent/__pycache__/agent.cpython-310.pyc`
+    - `ai-agent/__pycache__/agent.cpython-313.pyc`
+    - `ai-agent/agent.py`
+    - `data/__pycache__/insert_data.cpython-310.pyc`
+    - `data/__pycache__/insert_data.cpython-313.pyc`
+    - `data/__pycache__/query_data.cpython-310.pyc`
+    - `data/__pycache__/query_data.cpython-313.pyc`
+    - `data/query_data.py`
+    - `log.md`
+
+---
+
+## RAG 知識庫與向量搜尋功能 (2025-11-26)
+
+為了讓 AI Agent 能夠回答關於公司文化與考核標準的問題，我們實作了基於 RAG (Retrieval-Augmented Generation) 的知識庫系統。
+
+- **架構升級**：
+  - 引入 `chromadb` 作為向量資料庫，用於儲存與檢索文件向量。
+  - 使用 `google-genai` SDK (`text-embedding-004` 模型) 進行文本向量化 (Embeddings)。
+  - 建立 `data/knowledge_base/` 目錄，支援自動讀取 `.md` 與 `.txt` 格式的政策文件。
+
+- **新增檔案**：
+  - `ai-agent/rag_tool.py`: 核心 RAG 邏輯，包含文件讀取、向量化、ChromaDB 索引與搜尋功能。
+  - `data/knowledge_base/culture_policy.md`: 範例政策文件，包含公司核心價值與考核標準。
+  - `verify_rag.py`: (已移除) 用於驗證 RAG 功能的臨時測試腳本。
+
+- **修改檔案**：
+  - `ai-agent/agent.py`: 
+    - 整合 `rag_tool`，新增 `search_company_policies` 工具。
+    - 修正模組匯入路徑問題，確保 `rag_tool` 能被正確載入。
+  - `requirements.txt`: 新增 `chromadb` 依賴。
+  - `.env`: 確保包含 `GOOGLE_API_KEY` 設定。
+
+- **功能驗證**：
+  - 成功執行 `verify_rag.py`，確認能針對關鍵字「考核標準」檢索到正確的政策段落。
+  - Agent 現在具備回答「公司文化」、「考核標準」等問題的能力。

@@ -35,7 +35,8 @@ def create_database_employee(db_path: Optional[Path | str] = None) -> Path:
         department TEXT,
         position TEXT,
         salary REAL,
-        hire_date TEXT
+        hire_date TEXT,
+        supervisor_id INTEGER
     );
     """
 
@@ -44,6 +45,12 @@ def create_database_employee(db_path: Optional[Path | str] = None) -> Path:
         cur = conn.cursor()
         cur.executescript(schema)
         conn.commit()
+        # Ensure supervisor_id column exists for older DBs created without it
+        cur.execute("PRAGMA table_info(employee)")
+        cols = [r[1] for r in cur.fetchall()]
+        if 'supervisor_id' not in cols:
+            cur.execute("ALTER TABLE employee ADD COLUMN supervisor_id INTEGER")
+            conn.commit()
     finally:
         conn.close()
 

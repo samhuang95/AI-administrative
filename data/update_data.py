@@ -12,7 +12,7 @@ from data.query_data import query_employees
 DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "employee.db"
 
 # Allowed columns that can be updated
-ALLOWED_COLUMNS = {"first_name", "last_name", "email", "department", "position", "salary", "hire_date"}
+ALLOWED_COLUMNS = {"first_name", "last_name", "email", "department", "position", "salary", "hire_date", "supervisor_id"}
 
 
 def update_employee_by_id(emp_id: int, updates: Dict[str, Any], db_path: Optional[Path | str] = None) -> int:

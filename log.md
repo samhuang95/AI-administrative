@@ -235,6 +235,22 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
     - `data/update_data.py`
     - `log.md`
     - `requirements.txt`
+    - `requirements.txt`
+
+- [2025-11-28 14:35:00] UPDATE: Add `supervisor_id` support and remove temporary test scripts.
+  - command: `apply_patch: add supervisor_id to schema, update helpers and agent, delete temporary test scripts`
+  - summary: Added `supervisor_id` column to the `employee` table (with an `ALTER TABLE` fallback for existing databases), extended the single-row insert helper to accept and persist `supervisor_id`, allowed `supervisor_id` in the update helper, exposed `supervisor_id` in the agent tools (`create_employee` and `update_employee`), and cleaned up two temporary test harness scripts used during verification.
+  - files changed:
+    - `data/create_database.py` (add `supervisor_id` to `employee` schema; ensure column exists on older DBs via `PRAGMA table_info()` + `ALTER TABLE`)
+    - `data/insert_data.py` (add `supervisor_id` parameter to `insert_employee` and include it in INSERT)
+    - `data/update_data.py` (allow `supervisor_id` in `ALLOWED_COLUMNS`)
+    - `ai-agent/agent.py` (accept and forward `supervisor_id` in `create_employee`, allow updating via `update_employee`)
+    - `scripts/test_agent_tools.py` (deleted — temporary verification script)
+    - `scripts/test_update_call.py` (deleted — temporary verification script)
+  - notes:
+    - The `create_database` helper now performs a safe migration step: after applying the canonical CREATE TABLE IF NOT EXISTS, it checks `PRAGMA table_info(employee)` and issues `ALTER TABLE employee ADD COLUMN supervisor_id INTEGER` only if the column is missing.
+    - The removed scripts were temporary and are recoverable from Git history if needed.
+
     - `scripts/install_git_hook.ps1`
 - [2025-11-16 02:24:08] COMMIT: Create DB controllers and log record hook feature.
   - command: `git commit -m "Create DB controllers and log record hook feature."`

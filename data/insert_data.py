@@ -195,6 +195,7 @@ def insert_employee(
     position: str = "",
     salary: int | float | None = None,
     hire_date: str | None = None,
+    supervisor_id: int | None = None,
     db_path: Optional[Path | str] = None,
 ) -> int:
     """Insert a single employee and return the new employee id.
@@ -207,7 +208,7 @@ def insert_employee(
     try:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO employee (first_name, last_name, email, department, position, salary, hire_date) VALUES (?,?,?,?,?,?,?)",
+            "INSERT INTO employee (first_name, last_name, email, department, position, salary, hire_date, supervisor_id) VALUES (?,?,?,?,?,?,?,?)",
             (
                 str(first_name),
                 str(last_name),
@@ -216,6 +217,7 @@ def insert_employee(
                 str(position) if position is not None else None,
                 float(salary) if salary is not None else None,
                 str(hire_date) if hire_date is not None else None,
+                int(supervisor_id) if supervisor_id is not None else None,
             ),
         )
         conn.commit()

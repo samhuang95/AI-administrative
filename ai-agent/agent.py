@@ -36,7 +36,7 @@ def _format_employee_row(row: Dict) -> str:
     return f"{name} — {pos} ({dept}) <{email}>"
 
 
-def create_employee(first_name: str, last_name: str, email: str, department: Optional[str] = None, position: Optional[str] = None, salary: Optional[float] = None, hire_date: Optional[str] = None) -> Dict:
+def create_employee(first_name: str, last_name: str, email: str, department: Optional[str] = None, position: Optional[str] = None, salary: Optional[float] = None, hire_date: Optional[str] = None, supervisor_id: Optional[int] = None) -> Dict:
     """Tool: create a single employee row.
 
     Returns a dict with status and message (and `id` when successful).
@@ -52,6 +52,7 @@ def create_employee(first_name: str, last_name: str, email: str, department: Opt
             position=position or "",
             salary=salary,
             hire_date=hire_date,
+            supervisor_id=supervisor_id,
         )
         return {"status": "success", "text": f"員工已建立 (id={eid})。", "id": eid}
     except Exception as e:
@@ -82,6 +83,7 @@ def update_employee(
     position: Optional[str] = None,
     salary: Optional[float] = None,
     hire_date: Optional[str] = None,
+    supervisor_id: Optional[int] = None,
 ):
     """Tool: update an employee identified by id/email/name-like.
 
@@ -114,6 +116,8 @@ def update_employee(
         updates['salary'] = salary
     if hire_date is not None:
         updates['hire_date'] = hire_date
+    if supervisor_id is not None:
+        updates['supervisor_id'] = supervisor_id
 
     if not updates:
         return {"status": "error", "text": "請提供至少一個要更新的欄位（例如 position 或 salary）。"}

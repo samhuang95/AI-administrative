@@ -187,6 +187,43 @@ def insert_performance_review(
         conn.close()
 
 
+def insert_employee(
+    first_name: str,
+    last_name: str,
+    email: str,
+    department: str = "",
+    position: str = "",
+    salary: int | float | None = None,
+    hire_date: str | None = None,
+    db_path: Optional[Path | str] = None,
+) -> int:
+    """Insert a single employee and return the new employee id.
+
+    This is a small helper used by higher-level code (e.g. the agent) to
+    create a single employee row without touching the seeding helpers.
+    """
+    db_path = Path(db_path) if db_path is not None else DEFAULT_DB_PATH
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO employee (first_name, last_name, email, department, position, salary, hire_date) VALUES (?,?,?,?,?,?,?)",
+            (
+                str(first_name),
+                str(last_name),
+                str(email),
+                str(department) if department is not None else None,
+                str(position) if position is not None else None,
+                float(salary) if salary is not None else None,
+                str(hire_date) if hire_date is not None else None,
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
 def prepare_and_insert_review(
     reviewer_identifier=None,
     target_identifier=None,

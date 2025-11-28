@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 from typing import Optional
 
-from query_data import query_employees
+from data.query_data import query_employees
 
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "employee.db"

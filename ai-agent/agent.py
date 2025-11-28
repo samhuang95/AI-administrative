@@ -13,7 +13,14 @@ if current_dir not in sys.path:
 
 # Import database query helper
 from data.query_data import query_employees, query_performance_reviews
-from data.insert_data import insert_performance_review_data, insert_performance_review, resolve_employee_identifier
+from data.insert_data import (
+    insert_performance_review_data,
+    insert_performance_review,
+    resolve_employee_identifier,
+    insert_employee,
+)
+from data.update_data import update_employee_by_id
+from data.delete_data import delete_employee_by_id
 from rag_tool import search_company_policies
 
 from dotenv import load_dotenv, dotenv_values
@@ -27,6 +34,117 @@ def _format_employee_row(row: Dict) -> str:
     dept = row.get('department') or ''
     email = row.get('email') or ''
     return f"{name} — {pos} ({dept}) <{email}>"
+
+
+def create_employee(first_name: str, last_name: str, email: str, department: Optional[str] = None, position: Optional[str] = None, salary: Optional[float] = None, hire_date: Optional[str] = None) -> Dict:
+    """Tool: create a single employee row.
+
+    Returns a dict with status and message (and `id` when successful).
+    """
+    if not first_name or not last_name or not email:
+        return {"status": "error", "text": "請提供 `first_name`, `last_name` 與 `email`。"}
+    try:
+        eid = insert_employee(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            department=department or "",
+            position=position or "",
+            salary=salary,
+            hire_date=hire_date,
+        )
+        return {"status": "success", "text": f"員工已建立 (id={eid})。", "id": eid}
+    except Exception as e:
+        return {"status": "error", "text": "建立員工時發生錯誤。", "detail": str(e)}
+
+
+def get_employee(identifier: str) -> Dict:
+    """Tool: retrieve employee(s) by id/email/name-like identifier."""
+    candidates = resolve_employee_identifier(identifier)
+    if not candidates:
+        return {"status": "error", "text": f"找不到符合 '{identifier}' 的員工。"}
+    if len(candidates) > 1:
+        lines = [f"找到多位符合 '{identifier}' 的員工，請提供更精確的名稱或 ID："]
+        for c in candidates:
+            lines.append(_format_employee_row(c))
+        return {"status": "ambiguous", "text": "\n".join(lines), "candidates": candidates}
+    emp = candidates[0]
+    text = _format_employee_row(emp)
+    return {"status": "success", "text": text, "employee": emp}
+
+
+def update_employee(
+    identifier: str,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    email: Optional[str] = None,
+    department: Optional[str] = None,
+    position: Optional[str] = None,
+    salary: Optional[float] = None,
+    hire_date: Optional[str] = None,
+):
+    """Tool: update an employee identified by id/email/name-like.
+
+    Provide one or more optional fields (first_name, last_name, email,
+    department, position, salary, hire_date). This simpler signature is
+    easier for automatic function-calling schemas to parse.
+    """
+    candidates = resolve_employee_identifier(identifier)
+    if not candidates:
+        return {"status": "error", "text": f"找不到符合 '{identifier}' 的員工。"}
+    if len(candidates) > 1:
+        lines = [f"找到多位符合 '{identifier}' 的員工，請提供更精確的名稱或 ID："]
+        for c in candidates:
+            lines.append(_format_employee_row(c))
+        return {"status": "ambiguous", "text": "\n".join(lines), "candidates": candidates}
+    emp = candidates[0]
+
+    updates = {}
+    if first_name is not None:
+        updates['first_name'] = first_name
+    if last_name is not None:
+        updates['last_name'] = last_name
+    if email is not None:
+        updates['email'] = email
+    if department is not None:
+        updates['department'] = department
+    if position is not None:
+        updates['position'] = position
+    if salary is not None:
+        updates['salary'] = salary
+    if hire_date is not None:
+        updates['hire_date'] = hire_date
+
+    if not updates:
+        return {"status": "error", "text": "請提供至少一個要更新的欄位（例如 position 或 salary）。"}
+
+    try:
+        updated = update_employee_by_id(emp_id=int(emp["id"]), updates=updates)
+        if updated:
+            return {"status": "success", "text": f"已更新員工 (id={emp['id']})。", "rows_updated": updated}
+        return {"status": "success", "text": "沒有可更新的欄位或資料未變更。", "rows_updated": 0}
+    except Exception as e:
+        return {"status": "error", "text": "更新員工時發生錯誤。", "detail": str(e)}
+
+
+def delete_employee(identifier: str) -> Dict:
+    """Tool: delete an employee identified by id/email/name-like. Returns deletion count."""
+    candidates = resolve_employee_identifier(identifier)
+    if not candidates:
+        return {"status": "error", "text": f"找不到符合 '{identifier}' 的員工。"}
+    if len(candidates) > 1:
+        lines = [f"找到多位符合 '{identifier}' 的員工，請提供更精確的名稱或 ID："]
+        for c in candidates:
+            lines.append(_format_employee_row(c))
+        return {"status": "ambiguous", "text": "\n".join(lines), "candidates": candidates}
+    emp = candidates[0]
+    try:
+        deleted = delete_employee_by_id(int(emp["id"]))
+        if deleted:
+            return {"status": "success", "text": f"已刪除員工 (id={emp['id']})。", "rows_deleted": deleted}
+        return {"status": "error", "text": "刪除失敗（找不到資料或已被移除）。", "rows_deleted": 0}
+    except Exception as e:
+        return {"status": "error", "text": "刪除員工時發生錯誤。", "detail": str(e)}
 
 
 def list_all_employees() -> Dict:
@@ -145,5 +263,15 @@ name="ai_administrative",
 model=os.getenv("MODEL_USE"),
 description=("Agent to help with administrative tasks such as managing employee data"),
 instruction=("You are an AI administrative assistant. Use the provided tools to answer user queries about employees."),
-tools=[list_all_employees, find_employees_by_role, add_performance_review, get_employee_performance_reviews, search_company_policies],
+tools=[
+    list_all_employees,
+    find_employees_by_role,
+    create_employee,
+    get_employee,
+    update_employee,
+    delete_employee,
+    add_performance_review,
+    get_employee_performance_reviews,
+    search_company_policies,
+],
 )

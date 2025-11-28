@@ -75,3 +75,38 @@ Get-Content .\log.md -Tail 10
 - 若多人作業：請把安裝步驟加入團隊 onboarding（或 README），以確保每個人 clone 後執行一次安裝。
 
 如需我替你把安裝步驟自動寫入 README 或建立 CI 檢查，我可以代為完成。
+
+## 新增：Agent CRUD 工具（建立 / 讀取 / 更新 / 刪除）
+
+本專案在 `ai-agent/agent.py` 中新增了簡單的 CRUD 工具，用以管理 `employee` 資料表：
+
+- `create_employee(first_name, last_name, email, department=None, position=None, salary=None, hire_date=None)`
+- `get_employee(identifier)` — 支援 id、email 或模糊姓名查詢，若多筆會回傳 `ambiguous`。
+- `update_employee(identifier, updates)` — 以 identifier 定位單筆員工，`updates` 為欄位->值的 dict。
+- `delete_employee(identifier)` — 以 identifier 定位並刪除員工。
+
+這些工具會被註冊在 `LlmAgent` 的 `tools` 列表中，供 ADK agent 使用。
+
+### 簡單測試（已提供腳本）
+
+專案包含一個簡單的測試腳本 `scripts/test_agent_tools.py`，可用來在開發環境快速驗證 CRUD 行為。請先啟用虛擬環境並安裝依賴，然後在 repo 根目錄執行：
+
+```powershell
+& .\venv\Scripts\Activate.ps1
+python .\scripts\test_agent_tools.py
+```
+
+> 注意：該測試腳本會在匯入 `ai-agent/agent.py` 時使用輕量的 mock 物件繞過 `google`, `chromadb`, `dotenv` 等外部 SDK，以便在未安裝完整依賴時也能進行功能驗證。
+
+### Pytest 範例
+
+另外專案也包含 `tests/test_agent_crud.py`，示範如何在 CI 或本地以 pytest 執行 CRUD 測試。範例會在執行期間建立一個臨時 sqlite 資料庫並指向 agent 使用，避免改動開發者的主資料庫。
+
+要執行 pytest 範例：
+
+```powershell
+pip install pytest
+pytest -q
+```
+
+如果你希望我把該測試整合到 CI pipeline（例如 GitHub Actions），我可以幫你撰寫 workflow 檔案。 

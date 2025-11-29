@@ -204,6 +204,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
 ## 2025-11-29 — 語音中斷體驗優化
 
 - [2025-11-29 15:32] UPDATE: 改善前端語音互動邏輯，確保使用者開口時 Agent 立即停下
+
   - command: `apply_patch static/index.html (multiple updates)`
   - 重點：
     - `static/index.html`
@@ -237,6 +238,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - files:
     - `scripts/install_git_hook.ps1`
 - [2025-11-16 02:14:22] COMMIT: Create DB controllers and log record hook feature.
+
   - command: `git commit -m "Create DB controllers and log record hook feature.  "`
   - files:
     - `.gitignore`
@@ -264,6 +266,7 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
     - `requirements.txt`
 
 - [2025-11-28 14:35:00] UPDATE: Add `supervisor_id` support and remove temporary test scripts.
+
   - command: `apply_patch: add supervisor_id to schema, update helpers and agent, delete temporary test scripts`
   - summary: Added `supervisor_id` column to the `employee` table (with an `ALTER TABLE` fallback for existing databases), extended the single-row insert helper to accept and persist `supervisor_id`, allowed `supervisor_id` in the update helper, exposed `supervisor_id` in the agent tools (`create_employee` and `update_employee`), and cleaned up two temporary test harness scripts used during verification.
   - files changed:
@@ -274,10 +277,12 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
     - `scripts/test_agent_tools.py` (deleted — temporary verification script)
     - `scripts/test_update_call.py` (deleted — temporary verification script)
   - notes:
+
     - The `create_database` helper now performs a safe migration step: after applying the canonical CREATE TABLE IF NOT EXISTS, it checks `PRAGMA table_info(employee)` and issues `ALTER TABLE employee ADD COLUMN supervisor_id INTEGER` only if the column is missing.
     - The removed scripts were temporary and are recoverable from Git history if needed.
 
     - `scripts/install_git_hook.ps1`
+
 - [2025-11-16 02:24:08] COMMIT: Create DB controllers and log record hook feature.
   - command: `git commit -m "Create DB controllers and log record hook feature."`
   - files:
@@ -393,6 +398,51 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - command: `apply_patch: change agent name to ai_administrative`
   - files:
     - `ai-agent/agent.py`
+
+---
+
+## 2025-11-29 — 文化比對功能強化
+
+- [2025-11-29 17:05] UPDATE: 強化 `find_culture_misaligned_employees()`：加入從 RAG 政策文字擷取動態觸發詞，並使用 Embedding 進行語意相似度比對。
+
+  - command: `apply_patch ai-agent/agent.py (add policy parser + semantic matcher) ; run quick local test`
+  - 重點：
+    - 在 `ai-agent/agent.py` 中新增 `_extract_rules_from_policy(policy_text)`，將 RAG 回傳的政策文字解析為 heading/段落式的簡單 trigger list，並以此為動態規則以提升關鍵詞偵測的召回率。
+    - 新增 embedding 與相似度輔助函式 `_embed_texts()` 與 `_cosine_sim()`（重用 `rag_tool.GoogleGenAIEmbeddingFunction`），在比對每則考核評語時，將評語 embedding 與政策 chunk embeddings 計算 cosine similarity，超過門檻則視為匹配並加入 `reasons`（包含 snippet 與 similarity score）。
+    - 將 keyword-based 檢測擴充為同時使用「內建靜態規則 + 動態政策規則 + 語意相似度閾值(預設 0.72)」的混成策略。
+    - 此次變更只修改 `ai-agent/agent.py`，並重用既有 `ai-agent/rag_tool.py` 中的 `GoogleGenAIEmbeddingFunction` 作為 embedding 提供者。
+
+  - files:
+    - `ai-agent/agent.py` (UPDATE: add `_extract_rules_from_policy`, `_embed_texts`, `_cosine_sim`, integrate semantic matching into `find_culture_misaligned_employees`)
+
+  - 測試與結果：
+    - 執行快測 `find_culture_misaligned_employees()`（在本地 venv 中以 `python -c` 或模組匯入方式呼叫）返回 `status: success`，並列出 16 位被標記的員工（樣本輸出包含每則評語與相似度分數 0.76-0.81 範圍）。
+    - 目的：讓 RAG 的政策文字能直接影響檢測邏輯，提升對政策措辭或同義改寫的偵測能力，而非僅靠靜態 keyword 列表。
+
+  - 注意事項 / 建議：
+    - 目前使用的相似度閾值 `SEMANTIC_THRESHOLD = 0.72` 可依需求調整以控制精準度/召回率權衡；可以考慮對每個 policy-chunk 設置更細的映射到特定 dimension（heading mapping）以改善可解釋性。
+    - 若需要進一步降低誤報，建議加入：
+      - 對每則評語的多條 evidence 做去重處理，或
+      - 使用 LLM 作為二次分類器（在 keyword/semantic 命中後驗證），或
+      - 微調 embedding 模型與 chunk 大小（chunking strategy）。
+
+  - command to reproduce quick test (example):
+
+    ```powershell
+    & D:/AI-administrative/venv/Scripts/Activate.ps1;
+    python - <<'PY'
+    import runpy, pprint
+    g = runpy.run_path(r"ai-agent\\agent.py")
+    res = g['find_culture_misaligned_employees']()
+    pprint.pprint(res)
+    PY
+    ```
+
+  - follow-up: 如果你同意，我可以：
+    1) 把相似度片段與 policy heading 做明確對應（增加 dimension mapping），
+    2) 把此功能加到 server（`web_voice_server.py`）提供 `/culture_audit` JSON endpoint，或
+    3) 調整閾值並在少量真實/合成範例上跑單元測試以驗證精準率與召回率。
+
 
 - [2025-11-16 04:56:20] CREATE: Add assistant helper to append assistant-originated log entries.
   - command: `create_file: scripts/assistant_append_log.py`
@@ -511,3 +561,12 @@ Note: I will continue to append assistant-originated entries when I make edits d
     - `web_voice_server.py`
 - [2025-11-29 16:16:42] COMMIT: (unable to read commit message)
   - command: `git commit -m "(unable to read commit message)"`
+- [2025-11-29 16:17:41] COMMIT: (unable to read commit message)
+  - command: `git commit -m "(unable to read commit message)"`
+  - files:
+    - `data/chroma_db/cba52eea-b3f6-4f28-8497-c249689d8772/data_level0.bin`
+    - `data/chroma_db/cba52eea-b3f6-4f28-8497-c249689d8772/length.bin`
+    - `data/chroma_db/chroma.sqlite3`
+    - `log.md`
+    - `static/index.html`
+    - `web_voice_server.py`

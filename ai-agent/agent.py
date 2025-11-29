@@ -13,7 +13,7 @@ if current_dir not in sys.path:
 
 # Import database query helper
 from data.query_data import query_employees, query_performance_reviews
-from data.insert_data import insert_performance_review_data, insert_performance_review, resolve_employee_identifier
+from data.insert_data import insert_performance_review_data, insert_performance_review, resolve_employee_identifier, insert_employee_data, insert_employee
 from rag_tool import search_company_policies, GoogleGenAIEmbeddingFunction
 
 from dotenv import load_dotenv, dotenv_values
@@ -453,6 +453,48 @@ def get_employee_performance_reviews(employee_name: str) -> Dict:
     return {"status": "success", "text": "\n".join(lines), "reviews": reviews}
 
 
+def seed_employee_data() -> Dict:
+    """Tool: seed `employee` table using `insert_employee_data` helper.
+
+    Returns a dict with status and number of rows inserted.
+    """
+    try:
+        inserted = insert_employee_data()
+        return {"status": "success", "text": f"Inserted {int(inserted)} employee rows.", "inserted": int(inserted)}
+    except Exception as e:
+        return {"status": "error", "text": "Failed to insert employee data.", "detail": str(e)}
+
+
+def create_employee(
+    first_name: str,
+    last_name: str,
+    email: str,
+    department: str = "",
+    position: str = "",
+    salary: Optional[float] = None,
+    hire_date: Optional[str] = None,
+    supervisor_id: Optional[int] = None,
+) -> Dict:
+    """Tool: create a single employee row via `insert_employee` helper.
+
+    Returns a dict with status and the new employee id on success.
+    """
+    try:
+        new_id = insert_employee(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            department=department,
+            position=position,
+            salary=salary,
+            hire_date=hire_date,
+            supervisor_id=supervisor_id,
+        )
+        return {"status": "success", "text": f"Created employee id={new_id}", "id": int(new_id)}
+    except Exception as e:
+        return {"status": "error", "text": "Failed to create employee.", "detail": str(e)}
+
+
 # Register tools with LlmAgent if available
 root_agent = LlmAgent(
     name="ai_administrative",
@@ -466,5 +508,7 @@ root_agent = LlmAgent(
         get_employee_performance_reviews,
         search_company_policies,
         find_culture_misaligned_employees,
+        seed_employee_data,
+        create_employee,
     ],
 )

@@ -198,6 +198,32 @@ py -3 d:\AI-administrative\ai-agent\test_modify.py
   - files:
     - `ai-agent/create_database.py`
     - `ai-agent/__init__.py`
+
+---
+
+## 2025-11-29 — 語音中斷體驗優化
+
+- [2025-11-29 15:32] UPDATE: 改善前端語音互動邏輯，確保使用者開口時 Agent 立即停下
+  - command: `apply_patch static/index.html (multiple updates)`
+  - 重點：
+    - `static/index.html`
+      - 將語音辨識設為 `interimResults=true`、在 `onspeechstart` 立刻觸發 `speechSynthesis.cancel()` 與 `/cancel` API。
+      - 對 `/chat` 請求加入 `AbortController`，在偵測到使用者說話或按下「中斷」按鈕時會中止 pending fetch，避免舊回覆繼續播報。
+      - 新增「中斷」按鈕，統一透過 `cancelAgentInteraction()` helper 進行 TTS 停止與後端取消。
+      - 使用 Web Audio API 監控麥克風音量，在 Agent 語音輸出時若偵測到持續語音能量就自動中止回覆並更新狀態。
+    - `web_voice_server.py`
+      - 先前版本已具備 `/cancel` 與 session task 管理；前端現在會在每次中斷時發送取消請求，搭配 server 端任務取消流程。
+  - 測試：
+    1. `python web_voice_server.py`
+    2. 開啟 `http://localhost:8000/static/index.html`，啟動語音對話。
+    3. 在 Agent 回覆時開口或按「中斷」，確認語音立即停止且可重新詢問。
+
+- [2025-11-29 16:07] UPDATE: 降低麥克風偵測靈敏度，避免環境音誤觸發中斷
+  - command: `apply_patch static/index.html (audioDetectionConfig)`
+  - 說明：
+    - 提高能量門檻 (`threshold=0.18`)、要求連續多個片段超過門檻 (`sustainCount=4`)、並加入 1.2s cooldown，減少背景噪音造成的誤判。
+    - 當偵測為使用者語音時才會重置計數並觸發 `cancelAgentInteraction('audio')`。
+  - 驗證：讓 Agent 回覆時撥放背景聲或輕微噪音，確認不會被中斷；實際開口說話則仍能在約 0.3 秒內停止 Agent 語音。
 - [2025-11-16 01:58:25] CREATE: Add top-level log.md changelog summarizing major changes.
   - command: `apply_patch: add log.md`
   - files:
@@ -483,3 +509,5 @@ Note: I will continue to append assistant-originated entries when I make edits d
     - `requirements.txt`
     - `static/index.html`
     - `web_voice_server.py`
+- [2025-11-29 16:16:42] COMMIT: (unable to read commit message)
+  - command: `git commit -m "(unable to read commit message)"`

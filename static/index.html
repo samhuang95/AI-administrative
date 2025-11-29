@@ -1,375 +1,635 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>老闆不要吵</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+      }
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 80%;
+        max-width: 600px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 1.5rem;
+      }
+      #status {
+        margin: 1rem 0;
+        font-size: 1.2rem;
+        color: #666;
+        min-height: 1.5em;
+      }
+      .controls {
+        margin: 2rem 0;
+      }
+      button {
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 0 10px;
+      }
+      #startBtn {
+        background-color: #007bff;
+        color: white;
+      }
+      #startBtn:hover {
+        background-color: #0056b3;
+      }
+      #startBtn.listening {
+        background-color: #dc3545;
+        animation: pulse 1.5s infinite;
+      }
+      #stopBtn {
+        background-color: #6c757d;
+        color: white;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
         }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 80%;
-            max-width: 600px;
+        50% {
+          transform: scale(1.05);
         }
-        h1 {
-            color: #333;
-            margin-bottom: 1.5rem;
+        100% {
+          transform: scale(1);
         }
-        #status {
-            margin: 1rem 0;
-            font-size: 1.2rem;
-            color: #666;
-            min-height: 1.5em;
-        }
-        .controls {
-            margin: 2rem 0;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0 10px;
-        }
-        #startBtn {
-            background-color: #007bff;
-            color: white;
-        }
-        #startBtn:hover {
-            background-color: #0056b3;
-        }
-        #startBtn.listening {
-            background-color: #dc3545;
-            animation: pulse 1.5s infinite;
-        }
-        #stopBtn {
-            background-color: #6c757d;
-            color: white;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        #log {
-            text-align: left;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 1rem;
-            border-radius: 8px;
-            background: #fafafa;
-            margin-top: 1rem;
-        }
-        .message {
-            margin-bottom: 0.5rem;
-            padding: 0.5rem;
-            border-radius: 5px;
-        }
-        .user {
-            background-color: #e3f2fd;
-            color: #0d47a1;
-        }
-        .agent {
-            background-color: #f1f8e9;
-            color: #33691e;
-        }
-        .visualizer {
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            margin-bottom: 1rem;
-        }
-        .bar {
-            width: 5px;
-            height: 10px;
-            background-color: #007bff;
-            border-radius: 2px;
-            transition: height 0.1s ease;
-        }
-        #textControls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-            margin-top: 1rem;
-        }
-        #textInput {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 25px;
-            font-size: 1rem;
-            outline: none;
-        }
-        #textInput:focus {
-            border-color: #007bff;
-        }
-        #sendBtn {
-            padding: 10px 25px;
-            background-color: #28a745;
-            color: white;
-            font-size: 1rem;
-        }
-        #sendBtn:hover {
-            background-color: #218838;
-        }
+      }
+      #log {
+        text-align: left;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #fafafa;
+        margin-top: 1rem;
+      }
+      .message {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 5px;
+      }
+      .user {
+        background-color: #e3f2fd;
+        color: #0d47a1;
+      }
+      .agent {
+        background-color: #f1f8e9;
+        color: #33691e;
+      }
+      .visualizer {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        margin-bottom: 1rem;
+      }
+      .bar {
+        width: 5px;
+        height: 10px;
+        background-color: #007bff;
+        border-radius: 2px;
+        transition: height 0.1s ease;
+      }
+      #textControls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+        margin-top: 1rem;
+      }
+      #textInput {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 1rem;
+        outline: none;
+      }
+      #textInput:focus {
+        border-color: #007bff;
+      }
+      #sendBtn {
+        padding: 10px 25px;
+        background-color: #28a745;
+        color: white;
+        font-size: 1rem;
+      }
+      #sendBtn:hover {
+        background-color: #218838;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>老闆不要吵</h1>
-        
-        <div class="visualizer" id="visualizer">
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        </div>
+      <h1>老闆不要吵</h1>
 
-        <div id="status">點擊開始按鈕以啟動對話</div>
+      <div
+        class="visualizer"
+        id="visualizer"
+      >
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
 
-        <div class="controls" id="voiceControls">
-            <button id="startBtn">開始對話</button>
-        </div>
+      <div id="status">點擊開始按鈕以啟動對話</div>
 
-        <div class="controls" id="textControls">
-            <input type="text" id="textInput" placeholder="輸入訊息..." autocomplete="off">
-            <button id="sendBtn">發送</button>
-        </div>
+      <div
+        class="controls"
+        id="voiceControls"
+      >
+        <button id="startBtn">開始對話</button>
+        <button
+          id="cancelBtn"
+          disabled
+          style="
+            margin-left: 8px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+          "
+        >
+          中斷
+        </button>
+      </div>
 
-        <div id="log"></div>
+      <div
+        class="controls"
+        id="textControls"
+      >
+        <input
+          type="text"
+          id="textInput"
+          placeholder="輸入訊息..."
+          autocomplete="off"
+        />
+        <button id="sendBtn">發送</button>
+      </div>
+
+      <div id="log"></div>
     </div>
 
     <script>
-        const startBtn = document.getElementById('startBtn');
-        const statusDiv = document.getElementById('status');
-        const logDiv = document.getElementById('log');
-        const visualizer = document.getElementById('visualizer');
-        const bars = visualizer.querySelectorAll('.bar');
-        
-        const voiceControls = document.getElementById('voiceControls');
-        const textControls = document.getElementById('textControls');
-        const textInput = document.getElementById('textInput');
-        const sendBtn = document.getElementById('sendBtn');
+      const startBtn = document.getElementById('startBtn');
+      const statusDiv = document.getElementById('status');
+      const logDiv = document.getElementById('log');
+      const visualizer = document.getElementById('visualizer');
+      const bars = visualizer.querySelectorAll('.bar');
 
-        let recognition;
-        let isListening = false;
-        let synth = window.speechSynthesis;
-        let sessionId = 'session_' + Date.now();
+      const voiceControls = document.getElementById('voiceControls');
+      const textControls = document.getElementById('textControls');
+      const textInput = document.getElementById('textInput');
+      const sendBtn = document.getElementById('sendBtn');
 
-        // Text Input Handling
-        async function sendTextMessage() {
-            const text = textInput.value.trim();
-            if (!text) return;
+      let recognition;
+      let isListening = false;
+      let synth = window.speechSynthesis;
+      let sessionId = 'session_' + Date.now();
+      let visualizerInterval = null;
+      let isAgentBusy = false; // true while waiting for or handling an agent response
+      const cancelBtn = document.getElementById('cancelBtn');
+      let currentChatController = null;
+      let cancelInFlight = false;
+      let audioContext = null;
+      let analyser = null;
+      let audioDataArray = null;
+      let audioMonitorInterval = null;
+      let micStream = null;
+      let micSource = null;
+      let lastAudioCancelTs = 0;
+      let audioAboveThresholdCount = 0;
+      const audioDetectionConfig = {
+        threshold: 0.18, // higher threshold to ignore minor noise
+        sustainCount: 4, // require ~320ms of speech energy (4 * 80ms)
+        cooldownMs: 1200,
+      };
 
-            addLog('你', text, 'user');
-            textInput.value = '';
-            statusDiv.textContent = "思考中...";
+      function setAgentBusy(flag) {
+        isAgentBusy = flag;
+        try {
+          cancelBtn.disabled = !flag;
+        } catch (e) {}
+      }
 
-            // If voice is active, stop TTS if speaking to avoid confusion
-            if (synth.speaking) {
-                synth.cancel();
-            }
+      async function requestBackendCancel() {
+        if (cancelInFlight) return;
+        cancelInFlight = true;
+        try {
+          await fetch('/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId }),
+          });
+        } catch (e) {
+          console.warn('Cancel request failed', e);
+        } finally {
+          cancelInFlight = false;
+        }
+      }
 
+      async function cancelAgentInteraction(reason = 'speech') {
+        try {
+          if (synth.speaking) synth.cancel();
+        } catch (e) {
+          console.warn('Error cancelling TTS', e);
+        }
+
+        if (currentChatController) {
+          currentChatController.abort();
+          currentChatController = null;
+        }
+
+        await requestBackendCancel();
+        setAgentBusy(false);
+
+        if (reason === 'manual') {
+          statusDiv.textContent = '已中斷';
+        } else if (reason === 'audio') {
+          statusDiv.textContent = '偵測到你正在說話，已先中斷回覆';
+        }
+      }
+
+      async function ensureAudioMonitor() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.warn('Audio monitor not supported');
+          return;
+        }
+
+        try {
+          if (!micStream) {
+            micStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+          }
+
+          if (!audioContext) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioCtx();
+          }
+
+          if (!analyser) {
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+          }
+
+          if (!micSource) {
+            micSource = audioContext.createMediaStreamSource(micStream);
+            micSource.connect(analyser);
+          }
+
+          if (!audioDataArray || audioDataArray.length !== analyser.fftSize) {
+            audioDataArray = new Uint8Array(analyser.fftSize);
+          }
+
+          if (!audioMonitorInterval) {
+            audioMonitorInterval = setInterval(() => {
+              if (!analyser || !audioDataArray) return;
+              analyser.getByteTimeDomainData(audioDataArray);
+              let sum = 0;
+              for (let i = 0; i < audioDataArray.length; i++) {
+                sum += Math.abs(audioDataArray[i] - 128);
+              }
+              const avg = sum / audioDataArray.length;
+              const normalized = avg / 128;
+              // adjust counter based on energy level to avoid over-sensitivity
+              if (normalized > audioDetectionConfig.threshold) {
+                audioAboveThresholdCount = Math.min(
+                  audioDetectionConfig.sustainCount,
+                  audioAboveThresholdCount + 1
+                );
+              } else {
+                audioAboveThresholdCount = Math.max(
+                  0,
+                  audioAboveThresholdCount - 1
+                );
+              }
+
+              if (
+                audioAboveThresholdCount >= audioDetectionConfig.sustainCount &&
+                (synth.speaking || isAgentBusy)
+              ) {
+                const now = Date.now();
+                if (now - lastAudioCancelTs > audioDetectionConfig.cooldownMs) {
+                  lastAudioCancelTs = now;
+                  audioAboveThresholdCount = 0;
+                  cancelAgentInteraction('audio').catch((e) =>
+                    console.warn('Audio monitor cancel error', e)
+                  );
+                }
+              }
+            }, 80);
+          }
+        } catch (err) {
+          console.warn('Unable to start audio monitor', err);
+        }
+      }
+
+      function stopAudioMonitor() {
+        if (audioMonitorInterval) {
+          clearInterval(audioMonitorInterval);
+          audioMonitorInterval = null;
+        }
+      }
+
+      // Text Input Handling
+      async function sendTextMessage() {
+        const text = textInput.value.trim();
+        if (!text) return;
+
+        addLog('你', text, 'user');
+        textInput.value = '';
+        statusDiv.textContent = '思考中...';
+
+        // If voice is active, stop TTS if speaking to avoid confusion
+        if (synth.speaking) {
+          synth.cancel();
+        }
+
+        let controller;
+        try {
+          setAgentBusy(true);
+          if (currentChatController) {
+            currentChatController.abort();
+          }
+          controller = new AbortController();
+          currentChatController = controller;
+
+          const response = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, session_id: sessionId }),
+            signal: controller.signal,
+          });
+
+          const data = await response.json();
+          const reply = data.response;
+
+          addLog('Agent', reply, 'agent');
+          statusDiv.textContent = isListening ? '正在聆聽...' : '已回覆';
+          setAgentBusy(false);
+
+          // If listening is active, speak the reply
+          if (isListening) {
+            speak(reply);
+          }
+        } catch (error) {
+          if (error.name === 'AbortError') {
+            console.log('Chat request aborted');
+          } else {
+            console.error('Error:', error);
+            statusDiv.textContent = '發生錯誤';
+          }
+          setAgentBusy(false);
+        } finally {
+          if (controller && currentChatController === controller) {
+            currentChatController = null;
+          }
+        }
+      }
+
+      sendBtn.addEventListener('click', sendTextMessage);
+      textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendTextMessage();
+      });
+
+      // Initialize Speech Recognition
+      if (
+        'webkitSpeechRecognition' in window ||
+        'SpeechRecognition' in window
+      ) {
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = true; // Keep listening
+        recognition.interimResults = true;
+        recognition.lang = 'zh-TW';
+
+        recognition.onstart = () => {
+          isListening = true;
+          updateUI(true);
+          statusDiv.textContent = '正在聆聽...';
+          // start a subtle visualizer while listening
+          animateVisualizer(true);
+        };
+
+        recognition.onend = () => {
+          // Auto restart if supposed to be listening
+          if (isListening) {
             try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text, session_id: sessionId })
-                });
-                
-                const data = await response.json();
-                const reply = data.response;
-                
-                addLog('Agent', reply, 'agent');
-                statusDiv.textContent = isListening ? "正在聆聽..." : "已回覆";
-                
-                // If listening is active, speak the reply
-                if (isListening) {
-                    speak(reply);
-                }
-                
+              recognition.start();
+            } catch (e) {
+              console.log('Restarting recognition...');
+            }
+          } else {
+            updateUI(false);
+            statusDiv.textContent = '對話已停止';
+            animateVisualizer(false);
+          }
+        };
+
+        // Visual feedback when actual speech is detected
+        recognition.onspeechstart = () => {
+          // show active visualizer while user is speaking
+          animateVisualizer(true);
+          statusDiv.textContent = '偵測到語音...';
+          // If the agent is currently generating or TTS is playing, request cancellation immediately
+          if (isAgentBusy || synth.speaking) {
+            cancelAgentInteraction('speech').catch((e) =>
+              console.warn('Speech cancel error', e)
+            );
+          }
+        };
+
+        recognition.onspeechend = () => {
+          // stop the visualizer when user stops speaking; agent may start replying
+          animateVisualizer(false);
+          statusDiv.textContent = '思考中...';
+        };
+
+        recognition.onresult = async (event) => {
+          // If user speaks, stop any current TTS (Interruption)
+          if (synth.speaking) {
+            synth.cancel();
+          }
+
+          const result = event.results[event.results.length - 1];
+          const transcript = result[0].transcript.trim();
+          if (!result.isFinal) {
+            statusDiv.textContent = '聽你說話中...';
+            return;
+          }
+
+          if (transcript) {
+            addLog('你', transcript, 'user');
+            statusDiv.textContent = '思考中...';
+            // mark agent busy until we receive a response
+            setAgentBusy(true);
+
+            // Send to server
+            let controller;
+            try {
+              if (currentChatController) {
+                currentChatController.abort();
+              }
+              controller = new AbortController();
+              currentChatController = controller;
+
+              const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  text: transcript,
+                  session_id: sessionId,
+                }),
+                signal: controller.signal,
+              });
+
+              const data = await response.json();
+              const reply = data.response;
+
+              addLog('Agent', reply, 'agent');
+              statusDiv.textContent = '正在回答...';
+              // speak will manage busy state during TTS
+              speak(reply);
             } catch (error) {
+              if (error.name === 'AbortError') {
+                console.log('Speech chat request aborted');
+              } else {
                 console.error('Error:', error);
-                statusDiv.textContent = "發生錯誤";
+                statusDiv.textContent = '發生錯誤';
+              }
+              setAgentBusy(false);
+            } finally {
+              if (controller && currentChatController === controller) {
+                currentChatController = null;
+              }
             }
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          if (event.error === 'not-allowed') {
+            statusDiv.textContent = '請允許麥克風權限';
+            isListening = false;
+            updateUI(false);
+          }
+        };
+      } else {
+        statusDiv.textContent = '您的瀏覽器不支援語音辨識功能';
+        startBtn.disabled = true;
+      }
+
+      function speak(text) {
+        if (synth.speaking) {
+          synth.cancel();
         }
 
-        sendBtn.addEventListener('click', sendTextMessage);
-        textInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendTextMessage();
-        });
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-TW';
 
-        // Initialize Speech Recognition
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = true; // Keep listening
-            recognition.interimResults = false;
-            recognition.lang = 'zh-TW';
+        // mark busy during TTS so cancel button is enabled
+        setAgentBusy(true);
 
-            recognition.onstart = () => {
-                isListening = true;
-                updateUI(true);
-                statusDiv.textContent = "正在聆聽...";
-            };
+        utterance.onend = () => {
+          animateVisualizer(false);
+          setAgentBusy(false);
+          statusDiv.textContent = '正在聆聽...';
+        };
 
-            recognition.onend = () => {
-                // Auto restart if supposed to be listening
-                if (isListening) {
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        console.log("Restarting recognition...");
-                    }
-                } else {
-                    updateUI(false);
-                    statusDiv.textContent = "對話已停止";
-                }
-            };
+        synth.speak(utterance);
+        // animate while TTS is speaking
+        animateVisualizer(true);
+      }
 
-            recognition.onresult = async (event) => {
-                // If user speaks, stop any current TTS (Interruption)
-                if (synth.speaking) {
-                    synth.cancel();
-                }
-
-                const transcript = event.results[event.results.length - 1][0].transcript.trim();
-                if (transcript) {
-                    addLog('你', transcript, 'user');
-                    statusDiv.textContent = "思考中...";
-                    
-                    // Send to server
-                    try {
-                        const response = await fetch('/chat', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                text: transcript,
-                                session_id: sessionId
-                            })
-                        });
-                        
-                        const data = await response.json();
-                        const reply = data.response;
-                        
-                        addLog('Agent', reply, 'agent');
-                        statusDiv.textContent = "正在回答...";
-                        speak(reply);
-                        
-                    } catch (error) {
-                        console.error('Error:', error);
-                        statusDiv.textContent = "發生錯誤";
-                    }
-                }
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                if (event.error === 'not-allowed') {
-                    statusDiv.textContent = "請允許麥克風權限";
-                    isListening = false;
-                    updateUI(false);
-                }
-            };
+      function updateUI(listening) {
+        if (listening) {
+          startBtn.textContent = '停止對話';
+          startBtn.classList.add('listening');
         } else {
-            statusDiv.textContent = "您的瀏覽器不支援語音辨識功能";
-            startBtn.disabled = true;
+          startBtn.textContent = '開始對話';
+          startBtn.classList.remove('listening');
+        }
+      }
+
+      function addLog(sender, text, className) {
+        const div = document.createElement('div');
+        div.className = `message ${className}`;
+        div.textContent = `${sender}: ${text}`;
+        logDiv.appendChild(div);
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+
+      function animateVisualizer(active) {
+        if (!active) {
+          if (visualizerInterval) {
+            clearInterval(visualizerInterval);
+            visualizerInterval = null;
+          }
+          bars.forEach((bar) => (bar.style.height = '10px'));
+          return;
         }
 
-        function speak(text) {
-            if (synth.speaking) {
-                synth.cancel();
-            }
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-TW';
-            
-            utterance.onend = () => {
-                statusDiv.textContent = "正在聆聽...";
-                // Ensure recognition is active
-                if (!isListening) {
-                    // recognition.start(); 
-                }
-            };
-            
-            synth.speak(utterance);
-            animateVisualizer(true);
-            
-            utterance.onend = () => {
-                animateVisualizer(false);
-                statusDiv.textContent = "正在聆聽...";
-            };
-        }
+        // already running
+        if (visualizerInterval) return;
 
-        function updateUI(listening) {
-            if (listening) {
-                startBtn.textContent = "停止對話";
-                startBtn.classList.add('listening');
-            } else {
-                startBtn.textContent = "開始對話";
-                startBtn.classList.remove('listening');
-            }
-        }
+        visualizerInterval = setInterval(() => {
+          bars.forEach((bar) => {
+            const height = Math.random() * 30 + 10;
+            bar.style.height = `${height}px`;
+          });
+        }, 100);
+      }
 
-        function addLog(sender, text, className) {
-            const div = document.createElement('div');
-            div.className = `message ${className}`;
-            div.textContent = `${sender}: ${text}`;
-            logDiv.appendChild(div);
-            logDiv.scrollTop = logDiv.scrollHeight;
+      startBtn.addEventListener('click', () => {
+        if (isListening) {
+          isListening = false;
+          recognition.stop();
+          synth.cancel();
+          stopAudioMonitor();
+        } else {
+          try {
+            recognition.start();
+            ensureAudioMonitor();
+          } catch (e) {
+            console.error(e);
+          }
         }
+      });
 
-        function animateVisualizer(active) {
-            if (!active) {
-                bars.forEach(bar => bar.style.height = '10px');
-                return;
-            }
-            
-            // Simple random animation
-            const interval = setInterval(() => {
-                if (!synth.speaking) {
-                    clearInterval(interval);
-                    bars.forEach(bar => bar.style.height = '10px');
-                    return;
-                }
-                bars.forEach(bar => {
-                    const height = Math.random() * 30 + 10;
-                    bar.style.height = `${height}px`;
-                });
-            }, 100);
-        }
-
-        startBtn.addEventListener('click', () => {
-            if (isListening) {
-                isListening = false;
-                recognition.stop();
-                synth.cancel();
-            } else {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        });
+      // Manual cancel button: stop TTS and request backend cancellation
+      cancelBtn.addEventListener('click', async () => {
+        await cancelAgentInteraction('manual');
+      });
     </script>
-</body>
+  </body>
 </html>

@@ -6,13 +6,19 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <title>老闆不要吵</title>
+    <title>Silent Desk - 安靜才高效</title>
     <link
       rel="icon"
-      href="/static/img/keep-quiet.png"
+      href="/static/img/PC_human.png"
       type="image/png"
     />
     <style>
+      :root {
+        --circuit-bg1: #cde7f2;
+        --circuit-bg2: #e8f6fb;
+        --circuit-accent: #4ba3d6;
+        --circuit-glow: rgba(75, 163, 214, 0.6);
+      }
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         display: flex;
@@ -25,18 +31,110 @@
       }
       .container {
         background: white;
-        padding: 2rem;
+        padding: 1.5rem;
         border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 2;
         text-align: center;
-        width: 80%;
-        max-width: 600px;
+        width: 92%;
+        max-width: 1000px;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      /* circuit background */
+      .circuit-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0.22;
+      }
+      @media (max-width: 600px) {
+        .circuit-bg {
+          opacity: 0.12;
+        }
+      }
+
+      .circuit-bg svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .circuit-layer .circuit-line {
+        stroke: var(--circuit-accent);
+        stroke-width: 2.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-opacity: 0.95;
+        filter: url(#glow);
+      }
+      .circuit-layer .circuit-node {
+        fill: var(--circuit-accent);
+      }
+      .grid-layer {
+        opacity: 0.22;
+        mix-blend-mode: overlay;
+      }
+      .grid-line {
+        stroke: rgba(255, 255, 255, 0.06);
+        stroke-width: 1;
+      }
+
+      /* subtle motion */
+      @keyframes slowMove {
+        from {
+          transform: translate3d(0, 0, 0);
+        }
+        to {
+          transform: translate3d(-30px, 20px, 0);
+        }
+      }
+      .circuit-layer {
+        transform-origin: center;
+        animation: slowMove 18s linear infinite alternate;
+      }
+      .grid-layer {
+        animation: slowMove 28s linear infinite reverse;
+      }
+
+      /* Desktop layout: image + content side-by-side */
+      @media (min-width: 760px) {
+        .container {
+          flex-direction: row;
+          align-items: center;
+          text-align: left;
+          padding: 2rem;
+        }
+        .hero {
+          flex: 0 0 320px;
+        }
+        .content {
+          flex: 1 1 auto;
+        }
       }
       #pageIcon {
-        width: 72px;
-        height: 72px;
+        width: 320px;
+        height: auto;
         display: block;
-        margin: 0 auto 12px auto;
+        margin: 0 auto;
+        border-radius: 12px;
+      }
+      .hero img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .content {
+        padding: 0 1rem;
+      }
+      .subtitle {
+        color: #666;
+        margin-top: -0.4rem;
+        margin-bottom: 1rem;
       }
       h1 {
         color: #333;
@@ -151,68 +249,515 @@
       #sendBtn:hover {
         background-color: #218838;
       }
+
+      /* --- Optimized geometric background CSS (inserted) --- */
+      :root {
+        --geo-bg-0: linear-gradient(
+          135deg,
+          var(--circuit-bg1, #e8eef2) 0%,
+          var(--circuit-bg2, #f5f8fa) 100%
+        );
+        --geo-accent: var(--circuit-accent, #3a7d91);
+        --geo-accent-2: color-mix(in srgb, var(--geo-accent) 75%, #fff 25%);
+        --geo-dot-size: clamp(6px, 0.9vw, 16px);
+        --geo-line-thick: clamp(1px, 0.2vw, 2.5px);
+        --geo-padding: clamp(16px, 2.6vw, 40px);
+      }
+
+      .geometric-background {
+        position: relative;
+        width: 100%;
+        min-height: 100vh;
+        background: var(--geo-bg-0);
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .geometric-background::before,
+      .geometric-background::after {
+        content: '';
+        position: absolute;
+        background-repeat: no-repeat;
+        background-position: 0 0;
+        background-size: contain;
+        opacity: 0.95;
+        will-change: transform, opacity;
+      }
+
+      .geometric-background::before {
+        width: clamp(80px, 12vw, 140px);
+        height: clamp(300px, 45vh, 560px);
+        left: clamp(12px, 2vw, 28px);
+        top: clamp(30px, 4vh, 60px);
+        transform-origin: left top;
+        background-image: radial-gradient(
+            circle at 0 0,
+            var(--geo-accent) var(--geo-dot-size),
+            transparent calc(var(--geo-dot-size) + 2px)
+          ),
+          linear-gradient(
+            to bottom,
+            var(--geo-accent) var(--geo-line-thick),
+            transparent var(--geo-line-thick)
+          ),
+          linear-gradient(
+            to right,
+            var(--geo-accent) var(--geo-line-thick),
+            transparent var(--geo-line-thick)
+          );
+        background-size: var(--geo-dot-size) var(--geo-dot-size),
+          var(--geo-line-thick) calc(40% - var(--geo-dot-size)),
+          calc(30% + var(--geo-dot-size)) var(--geo-line-thick);
+        background-position: 0 0, 0 calc(var(--geo-dot-size) + 6px),
+          0 calc(40% - var(--geo-line-thick));
+        filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.04));
+      }
+
+      .geometric-background::after {
+        width: clamp(100px, 16vw, 220px);
+        height: clamp(240px, 38vh, 480px);
+        right: clamp(12px, 2vw, 28px);
+        top: clamp(80px, 12vh, 160px);
+        transform-origin: right top;
+        background-image: radial-gradient(
+            circle at 100% 100%,
+            var(--geo-accent) var(--geo-dot-size),
+            transparent calc(var(--geo-dot-size) + 2px)
+          ),
+          radial-gradient(
+            circle at 100% 30%,
+            var(--geo-accent) var(--geo-dot-size),
+            transparent calc(var(--geo-dot-size) + 2px)
+          ),
+          radial-gradient(
+            circle at 100% 0%,
+            var(--geo-accent-2) calc(calc(var(--geo-dot-size) * 0.8)),
+            transparent calc(calc(var(--geo-dot-size) * 0.8) + 2px)
+          ),
+          linear-gradient(
+            to bottom,
+            var(--geo-accent) var(--geo-line-thick),
+            transparent var(--geo-line-thick)
+          ),
+          linear-gradient(
+            to right,
+            var(--geo-accent) var(--geo-line-thick),
+            transparent var(--geo-line-thick)
+          );
+        background-size: var(--geo-dot-size) var(--geo-dot-size),
+          var(--geo-dot-size) var(--geo-dot-size),
+          calc(var(--geo-dot-size) * 0.8) calc(var(--geo-dot-size) * 0.8),
+          var(--geo-line-thick) calc(65% - var(--geo-dot-size)),
+          calc(65% + var(--geo-dot-size)) var(--geo-line-thick);
+        background-position: 100% 100%, 100% 30%, 100% 0,
+          100% calc(var(--geo-dot-size) + 8px),
+          0 calc(65% - var(--geo-line-thick));
+        filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.05));
+      }
+
+      .text-block {
+        position: absolute;
+        left: 50%;
+        top: 40%;
+        transform: translate(-50%, -40%);
+        background: linear-gradient(
+          135deg,
+          var(--geo-accent) 0%,
+          var(--geo-accent-2) 100%
+        );
+        color: #fff;
+        padding: clamp(10px, 2.2vw, 28px) clamp(28px, 8vw, 160px)
+          clamp(10px, 2.2vw, 28px) clamp(16px, 4vw, 28px);
+        font-size: clamp(16px, 2.3vw, 26px);
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(58, 125, 145, 0.18);
+        z-index: 10;
+        max-width: min(86%, 860px);
+        text-wrap: balance;
+      }
+
+      .center-lines {
+        position: absolute;
+        left: 50%;
+        top: calc(40% + 6.5vh);
+        transform: translateX(-50%);
+        width: clamp(220px, 42vw, 520px);
+        height: clamp(60px, 8vh, 140px);
+      }
+      .center-lines::before {
+        content: '';
+        position: absolute;
+        width: clamp(120px, 32vw, 340px);
+        height: var(--geo-line-thick);
+        background: var(--geo-accent);
+        left: 0;
+        top: clamp(14px, 2vh, 22px);
+        border-radius: 2px;
+      }
+      .center-lines::after {
+        content: '';
+        position: absolute;
+        width: calc(var(--geo-dot-size) * 1);
+        height: calc(var(--geo-dot-size) * 1);
+        background: var(--geo-accent);
+        border-radius: 50%;
+        left: clamp(120px, 32vw, 340px);
+        top: clamp(10px, 1.8vh, 18px);
+        box-shadow: 0 6px 18px var(--circuit-glow, rgba(75, 163, 214, 0.18));
+      }
+
+      @media (max-width: 960px) {
+        .geometric-background::before,
+        .geometric-background::after {
+          transform: scale(0.86);
+        }
+        .text-block {
+          padding-inline: clamp(16px, 6.5vw, 80px);
+          font-size: clamp(15px, 3.8vw, 20px);
+        }
+      }
+      @media (max-width: 600px) {
+        .geometric-background::before,
+        .geometric-background::after {
+          transform: scale(0.66);
+          opacity: 0.95;
+        }
+        .text-block {
+          padding: 14px 28px;
+          font-size: 15px;
+          left: 50%;
+          top: 36%;
+          transform: translate(-50%, -36%);
+          width: calc(100% - 56px);
+        }
+        .center-lines {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .circuit-layer,
+        .grid-layer,
+        .geometric-background::before,
+        .geometric-background::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <img
-        id="pageIcon"
-        src="/static/img/keep-quiet.png"
-        alt="keep quiet icon"
-      />
-      <h1>老闆不要吵</h1>
-
-      <div
-        class="visualizer"
-        id="visualizer"
+    <div
+      class="circuit-bg"
+      aria-hidden="true"
+    >
+      <svg
+        viewBox="0 0 1200 800"
+        preserveAspectRatio="xMidYMid slice"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-        <div class="bar"></div>
-      </div>
+        <defs>
+          <linearGradient
+            id="bgg"
+            x1="0"
+            x2="1"
+          >
+            <stop
+              offset="0%"
+              stop-color="var(--circuit-bg1)"
+            />
+            <stop
+              offset="100%"
+              stop-color="var(--circuit-bg2)"
+            />
+          </linearGradient>
 
-      <div id="status">點擊開始按鈕以啟動對話</div>
+          <filter
+            id="glow"
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+          >
+            <feGaussianBlur
+              stdDeviation="6"
+              result="coloredBlur"
+            />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
 
-      <div
-        class="controls"
-        id="voiceControls"
-      >
-        <button id="startBtn">開始對話</button>
-        <button
-          id="cancelBtn"
-          disabled
-          style="
-            margin-left: 8px;
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-          "
-        >
-          中斷
-        </button>
-      </div>
+          <pattern
+            id="diagGrid"
+            width="60"
+            height="60"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <path
+              d="M0 0 L0 60"
+              class="grid-line"
+            />
+          </pattern>
+        </defs>
 
-      <div
-        class="controls"
-        id="textControls"
-      >
-        <input
-          type="text"
-          id="textInput"
-          placeholder="輸入訊息..."
-          autocomplete="off"
+        <rect
+          x="0"
+          y="0"
+          width="1200"
+          height="800"
+          fill="url(#bgg)"
+          opacity="0.9"
         />
-        <button id="sendBtn">發送</button>
-      </div>
 
-      <div id="log"></div>
+        <!-- grid layer -->
+        <g
+          class="grid-layer"
+          transform="translate(0,0)"
+        >
+          <rect
+            x="0"
+            y="0"
+            width="1200"
+            height="800"
+            fill="url(#diagGrid)"
+          />
+        </g>
+
+        <!-- circuit layer -->
+        <g
+          class="circuit-layer"
+          transform="translate(40,40)"
+        >
+          <path
+            class="circuit-line"
+            d="M20 40 H260"
+          />
+          <circle
+            class="circuit-node"
+            cx="20"
+            cy="40"
+            r="4"
+          />
+          <circle
+            class="circuit-node"
+            cx="260"
+            cy="40"
+            r="4"
+          />
+
+          <path
+            class="circuit-line"
+            d="M260 40 v80 h120 v-40 h180"
+          />
+          <circle
+            class="circuit-node"
+            cx="560"
+            cy="80"
+            r="4"
+          />
+
+          <path
+            class="circuit-line"
+            d="M200 160 h400"
+          />
+          <circle
+            class="circuit-node"
+            cx="200"
+            cy="160"
+            r="3.5"
+          />
+          <circle
+            class="circuit-node"
+            cx="600"
+            cy="160"
+            r="3.5"
+          />
+
+          <path
+            class="circuit-line"
+            d="M680 40 v240 h120"
+          />
+          <circle
+            class="circuit-node"
+            cx="680"
+            cy="280"
+            r="4"
+          />
+
+          <path
+            class="circuit-line"
+            d="M40 280 h320 v120 h520"
+          />
+          <circle
+            class="circuit-node"
+            cx="880"
+            cy="400"
+            r="5"
+          />
+        </g>
+      </svg>
+    </div>
+    <div class="container">
+      <div class="hero">
+        <img
+          id="pageIcon"
+          src="/static/img/PC_human.png"
+          alt="hero image"
+        />
+      </div>
+      <div class="content">
+        <h1>Silent Desk - 安靜才高效</h1>
+        <p class="subtitle">專注與效率的語音助理</p>
+
+        <div
+          class="visualizer"
+          id="visualizer"
+        >
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+
+        <div id="status">點擊開始按鈕以啟動對話</div>
+
+        <div
+          class="controls"
+          id="voiceControls"
+        >
+          <button id="startBtn">開始對話</button>
+          <button
+            id="cancelBtn"
+            disabled
+            style="
+              margin-left: 8px;
+              background: #ff6b6b;
+              color: white;
+              border: none;
+              padding: 12px 20px;
+              border-radius: 50px;
+            "
+          >
+            中斷
+          </button>
+        </div>
+
+        <div
+          class="controls"
+          id="textControls"
+        >
+          <input
+            type="text"
+            id="textInput"
+            placeholder="輸入訊息..."
+            autocomplete="off"
+          />
+          <button id="sendBtn">發送</button>
+        </div>
+
+        <div id="log"></div>
+      </div>
     </div>
 
     <script>
+      // extract dominant-like colors from hero image and apply to CSS variables
+      (function applyImageColors() {
+        function toRgbString(c) {
+          return `rgb(${c.r}, ${c.g}, ${c.b})`;
+        }
+
+        function sampleImage(img, size = 36) {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, size, size);
+            const data = ctx.getImageData(0, 0, size, size).data;
+            let r = 0,
+              g = 0,
+              b = 0,
+              count = 0,
+              maxSat = -1,
+              accent = { r: 80, g: 160, b: 200 };
+            for (let i = 0; i < data.length; i += 4) {
+              const rr = data[i],
+                gg = data[i + 1],
+                bb = data[i + 2],
+                a = data[i + 3];
+              if (a < 128) continue;
+              r += rr;
+              g += gg;
+              b += bb;
+              count++;
+              // compute simple saturation in HSV
+              const max = Math.max(rr, gg, bb),
+                min = Math.min(rr, gg, bb);
+              const sat = max === 0 ? 0 : (max - min) / max;
+              if (sat > maxSat) {
+                maxSat = sat;
+                accent = { r: rr, g: gg, b: bb };
+              }
+            }
+            if (count === 0) return { avg: { r: 120, g: 160, b: 200 }, accent };
+            return {
+              avg: {
+                r: Math.round(r / count),
+                g: Math.round(g / count),
+                b: Math.round(b / count),
+              },
+              accent,
+            };
+          } catch (e) {
+            return {
+              avg: { r: 120, g: 160, b: 200 },
+              accent: { r: 80, g: 160, b: 200 },
+            };
+          }
+        }
+
+        function applyVars(avg, accent) {
+          const darken = (c, f) => Math.max(0, Math.round(c * (1 - f)));
+          const bg1 = `rgb(${avg.r}, ${avg.g}, ${avg.b})`;
+          const bg2 = `rgb(${darken(avg.r, 0.12)}, ${darken(
+            avg.g,
+            0.12
+          )}, ${darken(avg.b, 0.12)})`;
+          const acc = `rgb(${accent.r}, ${accent.g}, ${accent.b})`;
+          const glow = `rgba(${accent.r}, ${accent.g}, ${accent.b}, 0.65)`;
+          document.documentElement.style.setProperty('--circuit-bg1', bg1);
+          document.documentElement.style.setProperty('--circuit-bg2', bg2);
+          document.documentElement.style.setProperty('--circuit-accent', acc);
+          document.documentElement.style.setProperty('--circuit-glow', glow);
+
+          // also tune grid and node opacities for contrast
+          const gridLines = document.querySelectorAll('.grid-line');
+          gridLines.forEach((g) =>
+            g.setAttribute('stroke', `rgba(${avg.r}, ${avg.g}, ${avg.b}, 0.06)`)
+          );
+        }
+
+        function init() {
+          const img = document.getElementById('pageIcon');
+          if (!img) return;
+          if (img.complete && img.naturalWidth) {
+            const s = sampleImage(img, 36);
+            applyVars(s.avg, s.accent);
+          } else {
+            img.addEventListener('load', () => {
+              const s = sampleImage(img, 48);
+              applyVars(s.avg, s.accent);
+            });
+          }
+        }
+        document.addEventListener('DOMContentLoaded', init);
+      })();
       const startBtn = document.getElementById('startBtn');
       const statusDiv = document.getElementById('status');
       const logDiv = document.getElementById('log');

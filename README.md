@@ -1,8 +1,45 @@
 # AI-administrative
 
-### 1. 環境啟動
+## 快速開始
+
+1. 建立並啟用虛擬環境（Python 3.13+）：
+
+```powershell
+py -3.13 -m venv venv
+venv\Scripts\activate
+```
+
+2. 安裝相依：
+
+```powershell
+pip install -r requirements.txt
+```
+
+3. 啟動本專案（開發預覽）：
+
+```powershell
+# 選項 A（推薦，若已設定 adk command）
+adk web
+
+# 或 選項 B：靜態預覽
+python -m http.server 8000
+```
+
+4. 打開瀏覽器：
+
+```
+http://localhost:8000/static/index.html
+```
+
+## 1. 環境啟動
 
 在 `ai-agent` 資料中，建立 `.env` 檔，格式如下
+
+# AI-administrative
+
+## 1. 環境啟動
+
+在 `ai-agent` 資料中，建立 `.env` 檔，格式如下：
 
 ```powershell
 GOOGLE_GENAI_USE_VERTEXAI=FALSE
@@ -22,19 +59,70 @@ py -3.13 -m venv venv
 venv\Scripts\activate
 ```
 
-可以使用 `pip list` 確認是否為全新的虛擬環境。安裝相依套件：
+安裝相依套件：
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-### 2. 專案啟動
+## 2. 專案啟動
 
-在專案`根目錄`中，執行下方指令，就會開啟 `127.0.0.1:51530` 互動式介面連結
+在專案根目錄中執行：
 
 ```powershell
 adk web
 ```
+
+該指令（若可用）會啟動本專案的互動界面，預設連結為 `http://127.0.0.1:51530`。
+
+---
+
+## Web 介面語音助理
+
+此專案包含一個網頁版的語音助理介面（位於 `static/index.html`），提供語音輸入、文字轉語音、即時中斷與對話紀錄。
+
+快速啟用（開發/測試）：
+
+1. 確認相依已安裝：
+
+```powershell
+pip install -r requirements.txt
+```
+
+2. 啟動靜態伺服器（開發用）：
+
+```powershell
+# 選項 A：若使用專案的開發工具
+adk web
+
+# 選項 B：簡易靜態伺服器（預覽 static）
+python -m http.server 8000
+```
+
+3. 打開瀏覽器並訪問：
+
+```
+http://localhost:8000/static/index.html
+```
+
+功能重點：
+
+- 點擊「開始對話」以啟動語音辨識（建議使用 Chrome / Edge）。
+- Agent 回覆時若偵測到使用者語音會自動中斷回覆並轉為聆聽。
+- 頁面下方會顯示對話歷史（log）。
+
+注意與除錯：
+
+- 請允許瀏覽器使用麥克風權限。瀏覽器在非 HTTPS 環境下對麥克風權限會有限制；如需完整功能建議在 HTTPS 或 localhost 下執行。
+- 若無聲音，請確認系統音量、瀏覽器分頁靜音設定及 TTS 權限。
+- 若語音辨識無效，請檢查瀏覽器是否支援 Web Speech API（Chrome/Edge 支援較佳）。
+
+進階：
+
+- 要在本機快速預覽，使用 `python -m http.server 8000` 並開啟 `/static/index.html`。
+- 生產或內網部署時，請確保後端提供 `/chat` 與 `/cancel` API，並使用 HTTPS。
+
+---
 
 ## 開發者必讀
 
@@ -109,4 +197,4 @@ pip install pytest
 pytest -q
 ```
 
-如果你希望我把該測試整合到 CI pipeline（例如 GitHub Actions），我可以幫你撰寫 workflow 檔案。 
+如果你希望我把該測試整合到 CI pipeline（例如 GitHub Actions），我可以幫你撰寫 workflow 檔案。

@@ -1,4 +1,5 @@
 # AI-administrative
+[![AI-administrative Demo](https://img.youtube.com/vi/zr3GxOVOtvI/0.jpg)](https://www.youtube.com/watch?v=zr3GxOVOtvI)
 
 ## 快速開始
 

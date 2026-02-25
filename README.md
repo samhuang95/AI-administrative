@@ -1,5 +1,5 @@
 # AI-administrative
-[![AI-administrative Demo](https://img.youtube.com/vi/zr3GxOVOtvI/0.jpg)](https://www.youtube.com/watch?v=zr3GxOVOtvI)
+https://github.com/user-attachments/assets/3e6d670b-0333-41e0-b438-f6884252cd3a
 
 ## 快速開始
 
